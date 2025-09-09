@@ -1,0 +1,18 @@
+# 在您的專案根目錄執行
+git init
+
+# 添加所有檔案
+git add .
+
+# 提交變更 "改了什麼"
+git commit -m "Initial commit - ready for Vercel deployment"
+
+# 確保使用 main 分支
+git branch -M main
+
+# 如果還沒有遠端倉庫，創建一個新的 GitHub 倉庫
+# 然後添加遠端倉庫（替換為您的實際 URL）
+git remote add origin https://github.com/MichaelLu0220/newblogpage
+
+# 推送到 GitHub
+git push -u origin main
