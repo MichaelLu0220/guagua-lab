@@ -5,7 +5,7 @@
 export const siteConfig = {
   // 基本資訊
   name: "GuaGua's Blog",
-  url: 'https://newblogpage.vercel.app', // ⚠️ 請改成你的網域
+  url: 'https://guagua-tw.vercel.app', // ⚠️ 請改成你的網域
   
   // SEO 描述
   description: {
@@ -72,7 +72,7 @@ export const defaultSEO = {
       index: true,
       follow: true,
       'max-video-preview': -1,
-      'max-image-preview': 'large',
+      'max-image-preview': 'large' as const,  // 加上 as const
       'max-snippet': -1,
     },
   },

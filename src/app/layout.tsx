@@ -42,9 +42,9 @@ export const metadata: Metadata = {
   },
   
   // 驗證碼（選填，之後可加）
-  // verification: {
-  //   google: 'your-google-verification-code',
-  // },
+  verification: {
+    google: 'aTHCEHwFVaXqLVBna0PXjqGfh6OfZeBVyi-or3b6fRk',
+  },
 };
 
 // ============================================
