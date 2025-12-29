@@ -4,14 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
-
-interface PostMeta {
-  title: string;
-  date: string;
-  description?: string;
-  tags?: string[];
-  slug: string;
-}
+import { PostMeta } from '@/lib/posts'; // ✅ 從統一的 lib 匯入
 
 interface Props {
   posts: PostMeta[];

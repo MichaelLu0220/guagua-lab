@@ -4,14 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
-
-interface PostMeta {
-  title: string;
-  date: string;
-  description?: string;
-  tags?: string[];
-  slug: string;
-}
+import { PostMeta } from '@/lib/posts'; // ✅ 從統一的 lib 匯入
 
 interface Props {
   posts: PostMeta[];
@@ -22,8 +15,11 @@ export default function TagDetailClient({ posts, tag }: Props) {
   const [language, setLanguage] = useState<'en' | 'zh'>('en');
   const [mounted, setMounted] = useState(false);
 
-  const getText = (text: string | { en: string; zh: string }): string => {
-    return typeof text === 'string' ? text : text[language] ?? text.en;
+  // ✅ 處理雙語文字
+  const getText = (text: string | { en: string; zh: string } | undefined): string => {
+    if (!text) return '';
+    if (typeof text === 'string') return text;
+    return text[language] ?? text.en ?? '';
   };
 
   useEffect(() => {
@@ -63,14 +59,18 @@ export default function TagDetailClient({ posts, tag }: Props) {
                 </h2>
               </Link>
               <p className="text-gray-500 text-sm">{post.date}</p>
-              {post.description && <p className="mt-1 text-gray-600 dark:text-gray-300">{getText(post.description)}</p>}
+              {post.description && (
+                <p className="mt-1 text-gray-600 dark:text-gray-300">
+                  {getText(post.description)}
+                </p>
+              )}
             </li>
           ))}
         </ul>
 
         <div className="mt-10">
           <Link href="/tags" className="text-blue-600 dark:text-blue-400 hover:underline text-sm">
-            ← {language === 'zh' ? '回到所有標籤' : 'Back to All Tags'}
+            ← {language === 'zh' ? '返回所有標籤' : 'Back to all tags'}
           </Link>
         </div>
       </main>

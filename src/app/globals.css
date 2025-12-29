@@ -2,65 +2,83 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ============================================
+   Base Styles
+   ============================================ */
 
-@layer base {
-  :root {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
-  }
+:root {
+  --background: #fffbeb; /* amber-50 */
+  --foreground: #18181b; /* zinc-900 */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #18181b; /* zinc-900 */
+    --foreground: #fafafa; /* zinc-50 */
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* 語言切換動畫效果 */
+/* ============================================
+   Neobrutalism Utilities
+   ============================================ */
+
+@layer utilities {
+  /* Hard shadows for light mode */
+  .neo-shadow {
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  }
+  
+  .neo-shadow-sm {
+    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 1);
+  }
+  
+  .neo-shadow-lg {
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  /* Hard shadows for dark mode */
+  .dark .neo-shadow {
+    box-shadow: 4px 4px 0px 0px rgba(255, 255, 255, 0.2);
+  }
+  
+  .dark .neo-shadow-sm {
+    box-shadow: 3px 3px 0px 0px rgba(255, 255, 255, 0.2);
+  }
+  
+  .dark .neo-shadow-lg {
+    box-shadow: 6px 6px 0px 0px rgba(255, 255, 255, 0.2);
+  }
+
+  /* Hover effect - shadow shrinks and element moves */
+  .neo-hover {
+    transition: all 0.15s ease;
+  }
+  
+  .neo-hover:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+  }
+  
+  .dark .neo-hover:hover {
+    box-shadow: 2px 2px 0px 0px rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* ============================================
+   Language Content Toggle
+   ============================================ */
+
 .language-content {
-  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-  opacity: 1;
-  transform: translateY(0);
+  transition: opacity 0.3s ease-in-out;
 }
 
-.language-content[style*="display: none"] {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-/* 確保初始狀態隱藏非預設語言 */
-.language-content[data-lang="zh"] {
-  display: none;
-}
-
-/* 語言指示器 */
-.language-indicator {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: rgba(59, 130, 246, 0.9);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 8px; /* 修正這裡 */
-  font-size: 14px;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-}
-
-/* 語言切換樣式 - 預設顯示中文，隱藏英文 */
+/* Default: hide English, show Chinese */
 .language-content[data-lang="en"] {
   display: none;
 }
@@ -69,11 +87,210 @@ body {
   display: block;
 }
 
-/* 當 HTML 有 lang="en" 屬性時，顯示英文，隱藏中文 */
+/* When HTML has lang="en", flip visibility */
 html[lang="en"] .language-content[data-lang="en"] {
   display: block;
 }
 
 html[lang="en"] .language-content[data-lang="zh"] {
   display: none;
+}
+
+/* ============================================
+   Prose Overrides for Neobrutalism
+   ============================================ */
+
+/* Make code blocks more brutal */
+.prose pre {
+  border-radius: 0 !important;
+}
+
+.prose pre code {
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+/* Syntax highlighting colors */
+.prose pre code .comment { color: #6b7280; }
+.prose pre code .keyword { color: #f472b6; }
+.prose pre code .string { color: #4ade80; }
+.prose pre code .function { color: #60a5fa; }
+.prose pre code .number { color: #fbbf24; }
+
+/* Blockquotes with brutal style */
+.prose blockquote {
+  border-radius: 0 !important;
+  font-style: normal !important;
+}
+
+.prose blockquote p {
+  margin: 0;
+}
+
+/* Images with brutal borders */
+.prose img {
+  border-radius: 0 !important;
+}
+
+/* Lists with custom markers */
+.prose ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.prose ul > li {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.prose ul > li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: #ec4899; /* pink-500 */
+  font-weight: bold;
+}
+
+.prose ol {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: item;
+}
+
+.prose ol > li {
+  position: relative;
+  padding-left: 2rem;
+  counter-increment: item;
+}
+
+.prose ol > li::before {
+  content: counter(item);
+  position: absolute;
+  left: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: #ec4899; /* pink-500 */
+  color: white;
+  font-weight: bold;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dark mode list markers */
+.dark .prose ul > li::before {
+  color: #f472b6; /* pink-400 */
+}
+
+.dark .prose ol > li::before {
+  background: #db2777; /* pink-600 */
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f4; /* stone-100 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #18181b; /* zinc-900 */
+  border: 2px solid #f5f5f4;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46; /* zinc-700 */
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #27272a; /* zinc-800 */
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #a1a1aa; /* zinc-400 */
+  border: 2px solid #27272a;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d8; /* zinc-300 */
+}
+
+/* ============================================
+   Selection Styling
+   ============================================ */
+
+::selection {
+  background: #06b6d4; /* cyan-500 */
+  color: white;
+}
+
+.dark ::selection {
+  background: #0891b2; /* cyan-700 */
+  color: white;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out;
+}
+
+/* ============================================
+   Focus Styles (Accessibility)
+   ============================================ */
+
+:focus-visible {
+  outline: 3px solid #ec4899; /* pink-500 */
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  .neo-shadow,
+  .neo-shadow-sm,
+  .neo-shadow-lg {
+    box-shadow: none !important;
+  }
+  
+  nav, footer, .fixed {
+    display: none !important;
+  }
 }

@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*.local
+.env
 
 # vercel
 .vercel
@@ -39,3 +40,27 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ============================================
+# 新增項目
+# ============================================
+
+# Backup files (備份檔案)
+*.bak
+*.backup
+**/backup/
+
+# IDE / Editor (編輯器設定)
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated (系統產生)
+Thumbs.db
+desktop.ini
+
+# Temp files (暫存檔)
+*.tmp
+*.temp
+*.log
