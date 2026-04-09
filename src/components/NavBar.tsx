@@ -48,7 +48,7 @@ export default function NavBar() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-20 right-8 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+          className="fixed bottom-7 right-20 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
           aria-label="Scroll to top"
         >
           <FaArrowUp size={16} />
