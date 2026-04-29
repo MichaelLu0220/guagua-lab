@@ -8,6 +8,7 @@ import {
   getLocalizedText,
   getAdjacentPosts,
   extractHeadings,
+  slugify,
 } from '@/lib/posts';
 import { siteConfig } from '@/lib/siteConfig';
 import BlogClientContent from './BlogClientContent';
@@ -106,17 +107,8 @@ export default async function BlogPostPage({ params }: Props) {
   // 取得上下篇文章
   const { prev, next } = getAdjacentPosts(slug);
 
-  // 提取文章 headings（用於 TOC）
+  // 提取文章 headings（用於 TOC，按語言分組）
   const headings = extractHeadings(post.content);
-
-  // slugify 函式（與 extractHeadings 邏輯一致）
-  function slugify(text: string) {
-    return String(text)
-      .toLowerCase()
-      .replace(/[\s]+/g, '-')
-      .replace(/[^\w一-鿿-]/g, '')
-      .replace(/^-|-$/g, '');
-  }
 
   // Server-side 渲染 MDX
   const mdxContent = (

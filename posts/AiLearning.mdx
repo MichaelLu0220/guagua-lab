@@ -1,10 +1,10 @@
 ---
-title: 
-  en: "From Zero to Deployment: Building AI with an Engineer's Mindset"
-  zh: "從零訓練一個 AI，並真的讓人「用得到」"
+title:
+  en: "Training a Model from Zero, Then Actually Shipping It"
+  zh: "從零訓練一個模型，並真的把它送上線"
 description:
-  en: "A hands-on journey from training a model from scratch to deploying it as a production-ready API - no magic, just engineering."
-  zh: "從零開始、手動實作訓練流程，並最後將其轉化為 Production Ready API 的專案紀錄。"
+  en: "A hands-on record of writing a training loop by hand, persisting the weights, and serving them through a small FastAPI endpoint."
+  zh: "從零開始手寫訓練流程、把權重存下來，再用 FastAPI 對外提供推論服務的完整紀錄。"
 date: 2025-01-15 12:00:00
 tags: [AI, PyTorch, FastAPI, Machine Learning, Python]
 categories: Tech
@@ -12,52 +12,47 @@ categories: Tech
 
 <div className="language-content" data-lang="en">
 
-Most people say they're "learning AI." But in reality, they've only done one thing: "Got someone else's model to run on their computer."
+Most people who say they're "learning AI" really only do one thing: get someone else's model running on their laptop.
 
-This article isn't one of those "click Run All and you're done" tutorials. This is a record of building from scratch, manually implementing the training process, and finally turning it into a production-ready API.
+This piece is not a "click Run All and you're done" walkthrough. It is a record of writing the training loop by hand, persisting the weights, and finally turning them into a small but real HTTP API.
 
-## The Core Question: What is AI Actually Learning?
+## The Core Question: What Is the Model Actually Learning?
 
-My initial question was simple: **Why does running a bunch of math mean the model has "learned" something?**
+The starting question was simple: **why does running a pile of math mean the model has "learned" anything?**
 
-To understand this, I decided not to build a complex neural network. Instead, I went back to basics and completed a small but complete project that can actually be called. My principles were:
+To take that question seriously, I avoided complex networks and went back to basics — a tiny but complete project that can actually be called over HTTP. The principles I followed:
 
 1. No pre-made datasets
 2. No `model.fit()`
 3. Write the training loop myself
 4. Turn the model into an API myself
+5. Persist the weights, so the API does not silently rely on training-time variables
 
----
+## Step 1: Simulating Real-World Noise
 
-## Step 1: Simulating Real-World "Noise"
-
-AI doesn't start from rules - it starts from data. First, I defined a physical law of the real world:
+A model does not start from rules — it starts from data. So I first defined a "real-world" relationship and added measurement noise on top of it:
 
 > **y = 3x + 2 + noise**
-
-Where noise is random noise, representing imperfect observations in the real world.
 
 ```python
 import torch
 
-# Generate 100 random points
+# 100 random observations
 x = torch.randn(100, 1)
-# Define the true relationship and add noise
+# True relationship plus noise
 y = 3 * x + 2 + 0.1 * torch.randn(100, 1)
 ```
 
-The insight here: **AI's goal isn't to find truth, but to reverse-engineer the formula behind a pile of messy data.**
+The point of this step: **the goal of training is not to "find the truth," but to reverse-engineer the relationship hiding inside messy data.**
 
----
+## Step 2: A Model Is Just a Function with Weights
 
-## Step 2: A Model is Just a Function with "Weights"
-
-Without `nn.Linear`, a model is really just a simple linear function:
+Without `nn.Linear`, a model is just a linear function with two trainable parameters:
 
 > **ŷ = wx + b**
 
 ```python
-# Randomly initialize parameters
+# Random initialization
 w = torch.randn(1, requires_grad=True)
 b = torch.randn(1, requires_grad=True)
 
@@ -65,33 +60,29 @@ def model(x):
     return x * w + b
 ```
 
-At this point, `w` and `b` are random guesses. The model knows nothing about this world.
+At this point `w` and `b` are random guesses. The model knows nothing about the world yet.
 
----
+## Step 3: The Loss Function Is the Model's "Values"
 
-## Step 3: The Loss Function is the Model's "Values"
-
-AI doesn't know what's "right" - it only knows what's "wrong." I defined error using **Mean Squared Error (MSE)**:
+A model does not know what is "right" — it only knows what is "wrong." I defined that wrongness with **Mean Squared Error (MSE)**:
 
 ```python
 def loss_fn(y_pred, y_true):
     return ((y_pred - y_true) ** 2).mean()
 ```
 
-This line of code tells the model:
+That single line tells the model:
 
-> "The further your prediction, the higher the cost. Your entire existence is to minimize this number."
+> "The further your prediction, the higher the cost. Your entire job is to drive this number down."
 
----
+## Step 4: Training Is Controlled Wandering
 
-## Step 4: Training is "Controlled Wandering"
+This is the heart of the project. Training is not magic — it is five steps, repeated:
 
-This is the most crucial step. Training isn't magic - it's five steps repeated over and over:
-
-1. **Predict**: Feed in x, get predicted value
-2. **Calculate error**: Measure the gap from true y
-3. **Calculate gradient**: Find the direction that reduces error (Backpropagation)
-4. **Update parameters**: Take a small step in the right direction
+1. **Predict** — feed in `x`, get a prediction
+2. **Measure error** — compare against the true `y`
+3. **Compute the gradient** — find the direction that lowers the error (backpropagation)
+4. **Update parameters** — take a small step in that direction
 5. **Repeat**
 
 ```python
@@ -99,65 +90,63 @@ for epoch in range(100):
     y_pred = model(x)
     loss = loss_fn(y_pred, y)
 
-    # Execute backpropagation
+    # Backpropagation
     loss.backward()
 
-    # Manually update weights without recording computation graph
+    # Update outside the autograd graph
     with torch.no_grad():
         w -= 0.1 * w.grad
         b -= 0.1 * b.grad
-        # Zero gradients, otherwise they accumulate
+        # Gradients accumulate by default — clear them
         w.grad.zero_()
         b.grad.zero_()
 ```
 
-In the end, you'll find **w ≈ 3** and **b ≈ 2**.
+After enough epochs, you will see **w ≈ 3** and **b ≈ 2** — not because the model "understands" arithmetic, but because at those two numbers, **the loss surface is at its lowest point**.
 
-Not because the model understands math, but because at those two numbers, **Loss is at its lowest point on the entire surface**.
+## Step 5: Save the Trained Weights
 
----
+This is the step that most "from zero" tutorials skip. After training, the only thing that actually matters is two numbers, `w` and `b`. If they live only inside the training script, the API later will silently depend on training-time globals — and that dependency will break the moment the script is no longer running.
 
-## Step 5: From Notebook to Production
-
-After training, all you have are two numbers: `w` and `b`.
-
-Running charts in a notebook isn't development. Turning those two numbers into a service is.
-
-Inference and training are two different worlds:
-
-- **No need** to calculate gradients
-- **No need** to update parameters
-- **Only need** pure mathematical computation
+So before going anywhere near a server, persist them:
 
 ```python
-with torch.no_grad():
-    y = x * w + b
+import torch
+
+# Persist the trained parameters to disk
+torch.save({"w": w.detach(), "b": b.detach()}, "model.pt")
 ```
 
----
+`detach()` strips the autograd graph; saved tensors should not carry gradient state. From this point on, `model.pt` is the real deliverable, and everything downstream is allowed to assume it exists.
 
-## Step 6: Wrapping the Model as an API
+## Step 6: Serve the Model Through FastAPI
 
-I used **FastAPI** to turn these two trained numbers into an HTTP service that anyone in the world can call.
+With the weights on disk, the API has a clean contract: load once at startup, then do pure math per request.
 
 ```python
+import torch
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 app = FastAPI()
 
-# Assuming w, b are already trained and saved
+# Load the trained weights once, at startup
+state = torch.load("model.pt")
+w = state["w"]
+b = state["b"]
+
 class PredictRequest(BaseModel):
     x: float
 
 @app.post("/predict")
 def predict(req: PredictRequest):
-    # Inference mode: pure computation
-    y_result = req.x * w.item() + b.item()
-    return {"result": y_result}
+    # Inference: pure computation, no gradients
+    with torch.no_grad():
+        y = req.x * w.item() + b.item()
+    return {"result": y}
 ```
 
-Now, users just need to send a POST request:
+The endpoint is now self-contained — it does not depend on any variable left over from the training script. A client just sends:
 
 ```json
 POST /predict
@@ -167,82 +156,74 @@ POST /predict
 { "result": 6.5 }
 ```
 
-Users don't need to know what PyTorch is, or what your Loss function looks like.
+The caller does not need to know what PyTorch is, what loss function was used, or how many epochs were run.
 
----
+## This Is Not a Toy — It Is a Miniature Real System
 
-## This Isn't a Toy - It's a Miniature Real World
+The model in this project is laughably small, but its lifecycle is the same as anything shipped at GitHub, Netflix, or OpenAI:
 
-This project's model is laughably small, but its lifecycle is **exactly the same** as models at GitHub, Netflix, or OpenAI:
+- Data preparation (Step 1)
+- Architecture choice (Step 2)
+- Objective and optimisation (Steps 3 & 4)
+- Persistence (Step 5)
+- Serving (Step 6)
 
-- Data cleaning (Step 1)
-- Architecture design (Step 2)
-- Objective optimization (Step 3 & 4)
-- Deployment (Step 6)
+### Three Things I Took Away
 
-### Three Things I Learned
+**1. AI is not `if/else`.**
 
-**1. AI is not if/else**
+It is a function shaped by data, not by hand-written rules.
 
-It's a function "born" from data.
+**2. The model is not the deliverable — the interface is.**
 
-**2. The model isn't the point - the interface is**
+A model that nothing can call is just a file on disk.
 
-A model that can't be called is just garbage on a hard drive.
+**3. The underlying loop is universal.**
 
-**3. The underlying logic is universal**
+Whether the model is ChatGPT or this `y = wx + b`, the core idea is the same: minimise an objective function under a stream of data.
 
-Whether it's ChatGPT or this `y = wx + b`, the core is "minimizing the objective function."
-
----
-
-If you can walk through this entire process, your understanding of AI already surpasses most people who only know how to tweak prompts.
+Walking the whole loop end-to-end — generate, train, persist, serve — is what turns "I read about AI" into "I built one, and it runs."
 
 </div>
 
 <div className="language-content" data-lang="zh">
 
-很多人說自己在學 AI，但實際上大多數人只做到一件事：「讓別人的模型在自己的電腦跑起來。」
+很多人說自己在學 AI，但實際上做到的只有一件事：「讓別人的模型在自己的電腦跑起來。」
 
-這篇文章不是那種點點「Run All」就結束的教學。這是一個從零開始、不靠高階框架 API、手動實作訓練流程，並最後將其轉化為 Production Ready API 的專案紀錄。
+這篇文章不是那種點點 Run All 就結束的教學，而是一份完整的紀錄：自己寫訓練流程、把訓練後的權重存下來，最後用一支真的可以對外呼叫的 FastAPI 服務把它送上線。
 
-## 核心痛點：AI 到底在學什麼？
+## 核心問題：模型到底在學什麼？
 
-我一開始的疑問非常單純：**為什麼一堆數學跑一跑，模型就說它「學會了」？**
+最一開始的疑問很單純：**為什麼把一堆數學跑一跑，模型就會被認為「學會」了某件事？**
 
-為了搞懂這點，我決定不做複雜的神經網路，而是回歸本源，完成一個完整且「能被調用」的小專案。我的原則是：
+為了認真回答這個問題，我刻意不去碰複雜的神經網路，而是回到最基本的樣貌——一個小、但完整、可以被外部呼叫的專案。我給自己訂了幾條原則：
 
 1. 不用現成資料集
 2. 不用 `model.fit()`
 3. 自己寫訓練流程
 4. 自己把模型變成 API
+5. 把訓練好的權重存下來，避免 API 偷偷依賴訓練時的變數
 
----
+## Step 1：模擬真實世界的雜訊
 
-## Step 1：模擬真實世界的「雜訊」
-
-AI 不是從規則開始，是從資料開始。我先定義一個真實世界的物理規律：
+模型不是從規則開始，而是從資料開始。所以我先定義一條「真實世界」的關係式，然後在它身上加上觀測雜訊：
 
 > **y = 3x + 2 + noise**
-
-其中 noise 是隨機雜訊，代表現實世界中不完美的觀測值。
 
 ```python
 import torch
 
-# 生成 100 個隨機點
+# 100 個隨機觀測點
 x = torch.randn(100, 1)
-# 定義真實規律並加入雜訊
+# 真實規律加上雜訊
 y = 3 * x + 2 + 0.1 * torch.randn(100, 1)
 ```
 
-這一步的體悟是：**AI 的目標不是尋找真理，而是從一堆混亂的資料中，逆向工程出背後的公式。**
+這一步的核心觀念是：**訓練的目的不是找出「真理」，而是從一堆混亂的資料中，反推出背後的關係。**
 
----
+## Step 2：模型其實是一個帶有權重的函數
 
-## Step 2：模型只是帶有「權重」的函數
-
-在沒有 `nn.Linear` 的情況下，模型其實就是一個簡單的線性函數：
+在沒有 `nn.Linear` 的情況下，模型只是一個含有兩個可訓練參數的線性函數：
 
 > **ŷ = wx + b**
 
@@ -255,33 +236,29 @@ def model(x):
     return x * w + b
 ```
 
-此時的 `w` 與 `b` 是亂猜的，模型對這個世界一無所知。
-
----
+此時的 `w` 與 `b` 都是亂數，模型對這個世界一無所知。
 
 ## Step 3：Loss 函數是模型的「價值觀」
 
-AI 不知道什麼是「對」，它只知道什麼是「錯」。我定義錯誤的方式是**均方誤差（MSE）**：
+模型不知道什麼是「對」，它只知道什麼是「錯」。我用**均方誤差（MSE）**來定義錯誤：
 
 ```python
 def loss_fn(y_pred, y_true):
     return ((y_pred - y_true) ** 2).mean()
 ```
 
-這一行程式碼其實是在告訴模型：
+這一行其實是在跟模型說：
 
-> 「你預測得越遠，代價就越高。你的餘生就是為了最小化這個數字而活。」
-
----
+> 「你預測得越偏，代價就越高，你存在的意義就是把這個數字壓低。」
 
 ## Step 4：訓練是「受控的亂走」
 
-這是最關鍵的一步。訓練不是魔法，而是不斷重複的五個步驟：
+這是整個專案的核心。訓練不是魔法，只是把以下五步反覆做：
 
-1. **預測**：丟入 x，得到預測值
-2. **算錯**：計算與真實 y 的差距
-3. **算梯度**：找出讓錯誤下降的方向（Backpropagation）
-4. **更新參數**：往正確的方向跨出一小步
+1. **預測**：丟入 `x`，得到預測值
+2. **算錯**：與真實 `y` 比對誤差
+3. **算梯度**：找出讓誤差下降的方向（Backpropagation）
+4. **更新參數**：往那個方向跨一小步
 5. **重來**
 
 ```python
@@ -289,65 +266,63 @@ for epoch in range(100):
     y_pred = model(x)
     loss = loss_fn(y_pred, y)
 
-    # 執行反向傳播
+    # 反向傳播
     loss.backward()
 
-    # 手動更新權重，不記錄計算圖
+    # 更新權重，不記錄到計算圖裡
     with torch.no_grad():
         w -= 0.1 * w.grad
         b -= 0.1 * b.grad
-        # 梯度歸零，否則會累加
+        # 梯度預設會累加，要手動清掉
         w.grad.zero_()
         b.grad.zero_()
 ```
 
-最後，你會發現 **w ≈ 3**、**b ≈ 2**。
+跑完之後你會看到 **w ≈ 3** 與 **b ≈ 2**——不是因為模型懂數學，而是因為在這兩個數字下，**Loss 是整個曲面最低的位置**。
 
-不是因為模型懂數學，而是因為在那兩個數字下，**Loss 是整張曲面最低的地方**。
+## Step 5：把訓練好的權重存下來
 
----
+這是大多數「從零開始」教學會跳過的一步。訓練結束後真正重要的就是兩個數字：`w` 與 `b`。如果它們只活在訓練腳本裡，後面的 API 就會偷偷依賴訓練時的全域變數——一旦訓練腳本不再執行，那份依賴關係就會立刻斷掉。
 
-## Step 5：從 Notebook 走向生產環境
-
-訓練完後，你手上只有兩個數字：`w` 與 `b`。
-
-在筆記本裡跑完圖表不叫開發，把這兩個數字變成服務才是。
-
-推論（Inference）與訓練是兩個世界：
-
-- **不需要**算梯度
-- **不需要**更新參數
-- **只需要**純粹的數學計算
+所以在還沒碰到伺服器之前，先把它們寫到檔案裡：
 
 ```python
-with torch.no_grad():
-    y = x * w + b
+import torch
+
+# 將訓練好的參數寫到磁碟
+torch.save({"w": w.detach(), "b": b.detach()}, "model.pt")
 ```
 
----
+`detach()` 會把 autograd 計算圖剝掉——存檔的張量不應該還帶著梯度狀態。從這一刻起，`model.pt` 就是真正的交付物，後續的所有程式碼都可以放心假設它存在。
 
-## Step 6：把模型包裝成 API
+## Step 6：用 FastAPI 把模型推到線上
 
-我使用 **FastAPI**，將這兩個訓練好的數字變成一個可以被全世界呼叫的 HTTP 服務。
+權重存在磁碟上之後，API 的契約就很乾淨：啟動時載入一次，每個請求只做純計算。
 
 ```python
+import torch
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 app = FastAPI()
 
-# 這裡假設 w, b 已經訓練好並保存
+# 啟動時載入訓練好的權重
+state = torch.load("model.pt")
+w = state["w"]
+b = state["b"]
+
 class PredictRequest(BaseModel):
     x: float
 
 @app.post("/predict")
 def predict(req: PredictRequest):
-    # 推論模式：純計算
-    y_result = req.x * w.item() + b.item()
-    return {"result": y_result}
+    # 推論：只做純計算，不算梯度
+    with torch.no_grad():
+        y = req.x * w.item() + b.item()
+    return {"result": y}
 ```
 
-現在，使用者只需要發送一個 POST 請求：
+這個服務是自包覆的，不依賴任何訓練腳本留下來的全域變數。呼叫方只要送：
 
 ```json
 POST /predict
@@ -357,35 +332,32 @@ POST /predict
 { "result": 6.5 }
 ```
 
-使用者完全不需要知道什麼是 PyTorch，也不需要知道你的 Loss 函數長怎樣。
+呼叫方完全不需要知道什麼是 PyTorch、用了什麼 Loss 函數、跑了幾個 epoch。
 
----
+## 這不是玩具，是一個縮小版的真實系統
 
-## 這不是玩具，是縮小版的真實世界
+這個模型小到很可笑，但它的生命週期和 GitHub、Netflix、OpenAI 這些公司的模型完全一致：
 
-這個專案的模型小到可笑，但它的生命週期與 GitHub、Netflix 或 OpenAI 的模型**完全一致**：
+- 資料準備（Step 1）
+- 架構選擇（Step 2）
+- 目標與最佳化（Step 3 & 4）
+- 權重持久化（Step 5）
+- 對外服務（Step 6）
 
-- 有資料清理（Step 1）
-- 有架構設計（Step 2）
-- 有目標優化（Step 3 & 4）
-- 有部署實作（Step 6）
+### 我從這個流程學到的三件事
 
-### 我學到的三件事
+**1. AI 不是 `if/else`。**
 
-**1. AI 不是 if/else**
+它是被資料形塑出來的函數，而不是手寫規則。
 
-它是透過資料「生」出來的函數。
+**2. 模型本身不是交付物，介面才是。**
 
-**2. 模型不是重點，介面才是**
+沒有任何東西能呼叫的模型，只是硬碟上的一個檔案。
 
-不能被呼叫的模型只是硬碟裡的垃圾。
+**3. 底層循環是共通的。**
 
-**3. 底層邏輯是共通的**
+不論是 ChatGPT 還是這個 `y = wx + b`，核心都是同一件事：在一份持續流入的資料下，最小化某個目標函數。
 
-不管是 ChatGPT 還是這個 `y = wx + b`，核心都在於「最小化目標函數」。
-
----
-
-如果你能完整走完一遍這個流程，你對 AI 的理解就已經超越了大多數只會改 Prompt 的人。
+把整個流程從頭走一次——生成、訓練、保存、上線——就是把「我看過 AI」變成「我做過、它也真的跑得起來」的那一步。
 
 </div>

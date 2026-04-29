@@ -279,7 +279,7 @@ export default function ClientHomePage({ posts }: ClientHomePageProps) {
                         </div>
                         <div className="border-t border-gray-700 pt-6">
                             <p className="text-gray-400">
-                                © 2022 - 2025 GuaGua&apos;s blog | Powered by Next.js ❤️
+                                © 2022 - 2026 GuaGua&apos;s blog | Powered by Next.js ❤️
                             </p>
                         </div>
                     </div>

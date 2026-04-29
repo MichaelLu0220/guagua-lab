@@ -152,19 +152,53 @@ export interface Heading {
   id: string;
 }
 
-export function extractHeadings(content: string): Heading[] {
+export interface BilingualHeadings {
+  en: Heading[];
+  zh: Heading[];
+}
+
+export function slugify(text: string): string {
+  return String(text)
+    .toLowerCase()
+    .replace(/[\s]+/g, '-')
+    .replace(/[^\w一-鿿-]/g, '')
+    .replace(/^-|-$/g, '');
+}
+
+function scanHeadings(block: string): Heading[] {
   const regex = /^(#{2,3})\s+(.+)$/gm;
   const headings: Heading[] = [];
   let match;
-  while ((match = regex.exec(content)) !== null) {
+  while ((match = regex.exec(block)) !== null) {
     const level = match[1].length as 2 | 3;
     const text = match[2].trim().replace(/\*\*/g, '').replace(/`/g, '');
-    const id = text
-      .toLowerCase()
-      .replace(/[\s]+/g, '-')
-      .replace(/[^\w一-鿿-]/g, '')
-      .replace(/^-|-$/g, '');
-    headings.push({ level, text, id });
+    headings.push({ level, text, id: slugify(text) });
   }
   return headings;
+}
+
+export function extractHeadings(content: string): BilingualHeadings {
+  // Strip fenced code blocks so `##` inside code samples isn't captured.
+  const stripped = content.replace(/```[\s\S]*?```/g, '');
+
+  // Collect <div ... data-lang="en|zh">...</div> regions.
+  const langRegex = /<div[^>]*data-lang=["'](en|zh)["'][^>]*>([\s\S]*?)<\/div>/g;
+  const en: Heading[] = [];
+  const zh: Heading[] = [];
+  let found = false;
+  let m;
+  while ((m = langRegex.exec(stripped)) !== null) {
+    found = true;
+    const lang = m[1] as 'en' | 'zh';
+    const block = m[2];
+    (lang === 'en' ? en : zh).push(...scanHeadings(block));
+  }
+
+  if (found) {
+    return { en, zh };
+  }
+
+  // No bilingual wrappers — same headings for both languages.
+  const all = scanHeadings(stripped);
+  return { en: all, zh: all };
 }
