@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
 import { PostMeta } from '@/lib/posts';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface Props {
   posts: PostMeta[];
@@ -12,22 +12,9 @@ interface Props {
 }
 
 export default function CategoryDetailClient({ posts, categoryName }: Props) {
-  const [language, setLanguage] = useState<'en' | 'zh'>('en');
-  const [mounted, setMounted] = useState(false);
+  const { language, mounted } = useLanguage();
 
-  useEffect(() => {
-    setMounted(true);
-
-    const saved = localStorage.getItem('language') as 'en' | 'zh' | null;
-    if (saved) setLanguage(saved);
-
-    const handler = (e: CustomEvent<'en' | 'zh'>) => setLanguage(e.detail);
-    window.addEventListener('languageChange', handler as EventListener);
-
-    return () => {
-      window.removeEventListener('languageChange', handler as EventListener);
-    };
-  }, []);
+  const cap = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
   const getText = (text: string | { en: string; zh: string }) => {
     return typeof text === 'string' ? text : text[language] ?? text.en;
@@ -46,7 +33,7 @@ export default function CategoryDetailClient({ posts, categoryName }: Props) {
 
       <main className="max-w-4xl mx-auto px-6 pt-32 pb-24 animate-fade-in">
         <h1 className="text-4xl font-bold mb-10 border-b border-gray-300 dark:border-gray-700 pb-3">
-          {language === 'en' ? 'Category' : '分類'}：{categoryName}
+          {language === 'en' ? 'Category' : '分類'}：{cap(categoryName)}
         </h1>
 
         <ul className="space-y-4">
@@ -67,22 +54,6 @@ export default function CategoryDetailClient({ posts, categoryName }: Props) {
         <ThemeToggle />
       </div>
 
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

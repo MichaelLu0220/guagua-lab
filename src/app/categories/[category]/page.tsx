@@ -3,13 +3,14 @@ import { notFound } from 'next/navigation';
 import CategoryDetailClient from './CategoryDetailClient';
 
 interface Props {
-  params: { category: string };
+  params: Promise<{ category: string }>;
 }
 
-export default function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params }: Props) {
+  const { category } = await params;
   const posts = getAllPosts();
   const filtered = posts.filter(
-    post => post.categories === decodeURIComponent(params.category)
+    post => post.categories === decodeURIComponent(category)
   );
 
   if (!filtered.length) return notFound();
@@ -17,7 +18,7 @@ export default function CategoryPage({ params }: Props) {
   return (
     <CategoryDetailClient
       posts={filtered}
-      categoryName={decodeURIComponent(params.category)}
+      categoryName={decodeURIComponent(category)}
     />
   );
 }

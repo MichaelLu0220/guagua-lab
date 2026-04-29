@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
+import React from 'react';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import { 
-  getPostBySlug, 
-  getAllPostSlugs, 
+import {
+  getPostBySlug,
+  getAllPostSlugs,
   getLocalizedText,
-  getAdjacentPosts 
+  getAdjacentPosts,
+  extractHeadings,
 } from '@/lib/posts';
 import { siteConfig } from '@/lib/siteConfig';
 import BlogClientContent from './BlogClientContent';
+import { CodeBlock } from '@/components/CodeBlock';
 
 // ============================================
 // 靜態路徑生成（SSG 優化）
@@ -103,8 +106,29 @@ export default async function BlogPostPage({ params }: Props) {
   // 取得上下篇文章
   const { prev, next } = getAdjacentPosts(slug);
 
+  // 提取文章 headings（用於 TOC）
+  const headings = extractHeadings(post.content);
+
+  // slugify 函式（與 extractHeadings 邏輯一致）
+  function slugify(text: string) {
+    return String(text)
+      .toLowerCase()
+      .replace(/[\s]+/g, '-')
+      .replace(/[^\w一-鿿-]/g, '')
+      .replace(/^-|-$/g, '');
+  }
+
   // Server-side 渲染 MDX
-  const mdxContent = <MDXRemote source={post.content} />;
+  const mdxContent = (
+    <MDXRemote
+      source={post.content}
+      components={{
+        pre: CodeBlock as React.ComponentType<React.ComponentProps<'pre'>>,
+        h2: ({ children }) => <h2 id={slugify(String(children))}>{children}</h2>,
+        h3: ({ children }) => <h3 id={slugify(String(children))}>{children}</h3>,
+      }}
+    />
+  );
 
   return (
     <>
@@ -151,6 +175,7 @@ export default async function BlogPostPage({ params }: Props) {
         mdxContent={mdxContent}
         prevPost={prev ? { slug: prev.slug, title: prev.title } : null}
         nextPost={next ? { slug: next.slug, title: next.title } : null}
+        headings={headings}
       />
     </>
   );

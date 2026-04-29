@@ -1,32 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
-import { PostMeta } from '@/lib/posts'; // ✅ 從統一的 lib 匯入
+import { PostMeta } from '@/lib/posts';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface Props {
   posts: PostMeta[];
 }
 
 export default function TagClient({ posts }: Props) {
-  const [language, setLanguage] = useState<'en' | 'zh'>('en');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-
-    const saved = localStorage.getItem('language') as 'en' | 'zh' | null;
-    if (saved) setLanguage(saved);
-
-    const handler = (e: CustomEvent<'en' | 'zh'>) => setLanguage(e.detail);
-    window.addEventListener('languageChange', handler as EventListener);
-
-    return () => {
-      window.removeEventListener('languageChange', handler as EventListener);
-    };
-  }, []);
+  const { language, mounted } = useLanguage();
 
   if (!mounted) return null;
 
@@ -38,6 +23,7 @@ export default function TagClient({ posts }: Props) {
   });
 
   const tags = Object.keys(tagMap).sort();
+  const cap = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
   return (
     <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
@@ -59,7 +45,7 @@ export default function TagClient({ posts }: Props) {
               href={`/tags/${encodeURIComponent(tag)}`}
               className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-4 py-1.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800/70 transition text-sm font-medium"
             >
-              #{tag} <span className="text-xs text-gray-500">({tagMap[tag]})</span>
+              #{cap(tag)} <span className="text-xs text-gray-500">({tagMap[tag]})</span>
             </Link>
           ))}
         </div>
@@ -69,22 +55,6 @@ export default function TagClient({ posts }: Props) {
         <ThemeToggle />
       </div>
 
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

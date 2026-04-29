@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
-import { PostMeta } from '@/lib/posts'; // ✅ 從統一的 lib 匯入
+import { PostMeta } from '@/lib/posts';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface Props {
   posts: PostMeta[];
@@ -12,28 +12,15 @@ interface Props {
 }
 
 export default function TagDetailClient({ posts, tag }: Props) {
-  const [language, setLanguage] = useState<'en' | 'zh'>('en');
-  const [mounted, setMounted] = useState(false);
+  const { language, mounted } = useLanguage();
 
-  // ✅ 處理雙語文字
+  const cap = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
   const getText = (text: string | { en: string; zh: string } | undefined): string => {
     if (!text) return '';
     if (typeof text === 'string') return text;
     return text[language] ?? text.en ?? '';
   };
-
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem('language') as 'en' | 'zh' | null;
-    if (saved) setLanguage(saved);
-
-    const handler = (e: CustomEvent<'en' | 'zh'>) => setLanguage(e.detail);
-    window.addEventListener('languageChange', handler as EventListener);
-
-    return () => {
-      window.removeEventListener('languageChange', handler as EventListener);
-    };
-  }, []);
 
   if (!mounted) return null;
 
@@ -47,7 +34,7 @@ export default function TagDetailClient({ posts, tag }: Props) {
 
       <main className="max-w-3xl mx-auto pt-32 pb-24 px-6 animate-fade-in">
         <h1 className="text-4xl font-bold mb-10 border-b border-gray-300 dark:border-gray-700 pb-3">
-          {language === 'zh' ? '標籤' : 'Tag'}：{tag}
+          {language === 'zh' ? '標籤' : 'Tag'}：{cap(tag)}
         </h1>
 
         <ul className="space-y-6">
@@ -79,22 +66,6 @@ export default function TagDetailClient({ posts, tag }: Props) {
         <ThemeToggle />
       </div>
 
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

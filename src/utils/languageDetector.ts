@@ -1,5 +1,4 @@
 // utils/languageDetector.ts
-import { useEffect, useState } from 'react';
 
 export function detectBrowserLanguage(): 'en' | 'zh' {
   // 檢查是否為客戶端環境
@@ -47,39 +46,3 @@ export function initializeLanguage(): 'en' | 'zh' {
   return language;
 }
 
-// 自定義 Hook：用於其他組件使用語言檢測
-export function useLanguageDetection() {
-  const [language, setLanguage] = useState<'en' | 'zh'>('en');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    
-    // 初始化語言設置
-    const detectedLanguage = detectBrowserLanguage();
-    setLanguage(detectedLanguage);
-
-    // 監聽語言變更事件
-    const handleLanguageChange = (event: CustomEvent<'en' | 'zh'>) => {
-      setLanguage(event.detail);
-    };
-
-    window.addEventListener('languageChange', handleLanguageChange as EventListener);
-
-    return () => {
-      window.removeEventListener('languageChange', handleLanguageChange as EventListener);
-    };
-  }, []);
-
-  const changeLanguage = (newLanguage: 'en' | 'zh') => {
-    setLanguage(newLanguage);
-    localStorage.setItem('language', newLanguage);
-    window.dispatchEvent(new CustomEvent('languageChange', { detail: newLanguage }));
-  };
-
-  return {
-    language,
-    changeLanguage,
-    mounted
-  };
-}

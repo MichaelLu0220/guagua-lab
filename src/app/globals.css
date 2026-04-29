@@ -18,6 +18,10 @@
   }
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -243,7 +247,7 @@ html[lang="en"] .language-content[data-lang="zh"] {
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -252,7 +256,7 @@ html[lang="en"] .language-content[data-lang="zh"] {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.5s ease-out;
+  animation: fade-in 0.8s ease-out;
 }
 
 @keyframes slide-up {
@@ -289,8 +293,65 @@ html[lang="en"] .language-content[data-lang="zh"] {
   .neo-shadow-lg {
     box-shadow: none !important;
   }
-  
+
   nav, footer, .fixed {
     display: none !important;
   }
+}
+
+/* ============================================
+   Equity Backtest Page
+   ============================================ */
+
+#equity-page input[type="number"]::-webkit-outer-spin-button,
+#equity-page input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#equity-page input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+#equity-page input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.45);
+  cursor: pointer;
+}
+
+@media print {
+  #equity-page {
+    background: #fff !important;
+    color: #18181b !important;
+  }
+
+  #equity-page [class*="bg-zinc-"] {
+    background-color: #fff !important;
+  }
+  #equity-page [class*="border-zinc-"] {
+    border-color: #d4d4d8 !important;
+  }
+
+  #equity-page [class*="text-zinc-1"],
+  #equity-page [class*="text-zinc-2"],
+  #equity-page [class*="text-zinc-3"] { color: #18181b !important; }
+  #equity-page [class*="text-zinc-4"],
+  #equity-page [class*="text-zinc-5"],
+  #equity-page [class*="text-zinc-6"] { color: #52525b !important; }
+  #equity-page [class*="text-zinc-7"] { color: #71717a !important; }
+
+  #equity-page [class*="text-emerald-"] { color: #059669 !important; }
+  #equity-page [class*="text-rose-"]    { color: #e11d48 !important; }
+  #equity-page [class*="text-sky-"]     { color: #0284c7 !important; }
+  #equity-page [class*="text-amber-"]   { color: #d97706 !important; }
+  #equity-page [class*="text-indigo-"]  { color: #4f46e5 !important; }
+
+  #equity-page [class*="border-l-emerald-"] { border-left-color: #059669 !important; }
+  #equity-page [class*="border-l-rose-"]    { border-left-color: #e11d48 !important; }
+  #equity-page [class*="border-l-sky-"]     { border-left-color: #0284c7 !important; }
+  #equity-page [class*="border-l-amber-"]   { border-left-color: #d97706 !important; }
+
+  #equity-page canvas { display: none !important; }
+
+  #equity-page table { break-inside: auto; }
+  #equity-page tr    { break-inside: avoid; }
 }

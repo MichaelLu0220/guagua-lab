@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaUser, FaReply, FaHeart, FaTrash, FaPaperPlane, FaComment, FaClock } from 'react-icons/fa';
+import { FaUser, FaReply, FaHeart, FaPaperPlane, FaComment, FaClock } from 'react-icons/fa';
 
 interface Comment {
     id: string;
@@ -114,9 +114,9 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
 
         const savedComments = localStorage.getItem(`comments-${postSlug}`);
         if (savedComments) {
-            const parsed = JSON.parse(savedComments);
-            const processComments = (comments: any[]): Comment[] => {
-                return comments.map((c: any) => ({
+            const parsed = JSON.parse(savedComments) as Comment[];
+            const processComments = (comments: Comment[]): Comment[] => {
+                return comments.map((c) => ({
                     ...c,
                     timestamp: new Date(c.timestamp),
                     replies: c.replies ? processComments(c.replies) : []

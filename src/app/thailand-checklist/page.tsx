@@ -12,7 +12,7 @@ export default function ThailandChecklistPage() {
     if (saved) {
       try {
         setChecklistState(JSON.parse(saved));
-      } catch (e) {
+      } catch {
         console.error('Failed to parse saved checklist state');
       }
     }

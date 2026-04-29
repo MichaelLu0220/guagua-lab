@@ -31,6 +31,8 @@ export default function CategoryClient({ posts }: Props) {
 
   if (!mounted) return null;
 
+  const cap = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
   const categoryMap: Record<string, PostMeta[]> = {};
   posts.forEach(post => {
     const category = post.categories || 'Uncategorized';
@@ -60,7 +62,7 @@ export default function CategoryClient({ posts }: Props) {
                 className="flex items-center text-lg font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
                 <FaFolderOpen className="mr-2" />
-                {category} ({items.length})
+                {cap(category)} ({items.length})
               </Link>
             </li>
           ))}
@@ -71,21 +73,6 @@ export default function CategoryClient({ posts }: Props) {
         <ThemeToggle />
       </div>
 
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

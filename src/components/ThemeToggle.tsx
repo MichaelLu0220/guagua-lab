@@ -1,16 +1,17 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FaCog, FaMoon, FaSun, FaHome, FaGlobe } from 'react-icons/fa';
+import { FaCog, FaMoon, FaSun, FaHome } from 'react-icons/fa';
 import Link from 'next/link';
-import { useLanguageDetection } from '@/utils/languageDetector';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export default function ThemeToggle() {
     const [dark, setDark] = useState(false); // 主題暗色狀態
     const [open, setOpen] = useState(false); // 功能按鈕是否開啟
     const [spin, setSpin] = useState(false); // 齒輪是否旋轉
     const [isAnimating, setIsAnimating] = useState(false); // 動畫是否進行中
-    const { language, changeLanguage, mounted } = useLanguageDetection();
+    const [showPulse, setShowPulse] = useState(false); // 第一次進站的 pulse 提示
+    const { language, changeLanguage, mounted } = useLanguage();
     const menuRef = useRef<HTMLDivElement>(null);
     const closeTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -21,6 +22,7 @@ export default function ThemeToggle() {
             (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
         setDark(isDark);
         document.documentElement.classList.toggle('dark', isDark);
+        if (!localStorage.getItem('seen-gear-hint')) setShowPulse(true);
     }, []);
 
     // 防止水合錯誤：組件未掛載時不渲染
@@ -54,6 +56,8 @@ export default function ThemeToggle() {
             clearTimeout(closeTimer.current);
             closeTimer.current = null;
         }
+        localStorage.setItem('seen-gear-hint', 'true');
+        setShowPulse(false);
         setIsAnimating(true);
         setSpin(true); // 展開時齒輪旋轉
         setOpen(true);
@@ -129,6 +133,9 @@ export default function ThemeToggle() {
 
                 {/* 齒輪按鈕 */}
                 <div className="relative">
+                    {showPulse && (
+                        <span className="absolute inset-0 rounded-full animate-ping bg-white/40 pointer-events-none" />
+                    )}
                     <button
                         className={`relative transition-all duration-300 ease-out bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-full p-3 focus:outline-none shadow-lg hover:shadow-xl transform hover:scale-105 ${spin ? 'animate-spin-smooth' : ''}`}
                         aria-label="設定選單"
@@ -207,7 +214,6 @@ function AnimatedButton({
     href?: string;
 }) {
     const [showButton, setShowButton] = useState(false);
-    const [isVisible, setIsVisible] = useState(false);
     const [hasInteracted, setHasInteracted] = useState(false);
 
     // 控制進場與離場動畫
@@ -215,12 +221,7 @@ function AnimatedButton({
         if (visible) {
             setHasInteracted(true);
             setShowButton(true);
-            const timer = setTimeout(() => {
-                setIsVisible(true);
-            }, delay);
-            return () => clearTimeout(timer);
         } else {
-            setIsVisible(false);
             const hideTimer = setTimeout(() => {
                 setShowButton(false);
             }, 400);

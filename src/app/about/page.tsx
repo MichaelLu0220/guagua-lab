@@ -1,25 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export default function AboutPage() {
-  const [language, setLanguage] = useState<'en' | 'zh'>('en');
-
-  useEffect(() => {
-    const handleLangChange = (e: CustomEvent<'en' | 'zh'>) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLangChange as EventListener);
-    const saved = localStorage.getItem('language') as 'en' | 'zh' | null;
-    if (saved) setLanguage(saved);
-
-    return () => {
-      window.removeEventListener('languageChange', handleLangChange as EventListener);
-    };
-  }, []);
+  const { language } = useLanguage();
 
   return (
     <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
@@ -40,7 +26,7 @@ export default function AboutPage() {
           {language === 'en' ? (
             <>
               <p>
-                Hello! I'm <strong>Michael Lu</strong>, also known as <strong>GuaGua</strong>. I'm a passionate software developer with experience in backend systems, web development, and rule engine platforms like IBM ODM.
+                Hello! I&apos;m <strong>Michael Lu</strong>, also known as <strong>GuaGua</strong>. I&apos;m a passionate software developer with experience in backend systems, web development, and rule engine platforms like IBM ODM.
               </p>
               <p>
                 This blog is my digital notebook — a place to share thoughts, document learnings, and sometimes just talk about life.
@@ -70,22 +56,6 @@ export default function AboutPage() {
         <ThemeToggle />
       </div>
 
-      {/* 動畫樣式 */}
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

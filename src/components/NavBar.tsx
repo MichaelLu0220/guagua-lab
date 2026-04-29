@@ -5,15 +5,11 @@ import HomeNavBar from '@/components/HomeNavBar';
 import { FaArrowUp } from 'react-icons/fa';
 
 export default function NavBar() {
-  const [scrollY, setScrollY] = useState(0);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
@@ -24,7 +20,6 @@ export default function NavBar() {
       }
 
       setShowScrollTop(currentScrollY > 600);
-      setScrollY(currentScrollY);
       setLastScrollY(currentScrollY);
     };
 
@@ -38,8 +33,6 @@ export default function NavBar() {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  if (!mounted) return null;
 
   return (
     <>

@@ -1,35 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { FaCalendarAlt } from 'react-icons/fa';
 import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
 import { PostMeta } from '@/lib/posts';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface Props {
   posts: PostMeta[];
 }
 
 export default function ArchiveClient({ posts }: Props) {
-  const [language, setLanguage] = useState<'en' | 'zh'>('en');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-
-    const handleLangChange = (e: CustomEvent<'en' | 'zh'>) => {
-      setLanguage(e.detail);
-    };
-
-    window.addEventListener('languageChange', handleLangChange as EventListener);
-    const saved = localStorage.getItem('language') as 'en' | 'zh' | null;
-    if (saved) setLanguage(saved);
-
-    return () => {
-      window.removeEventListener('languageChange', handleLangChange as EventListener);
-    };
-  }, []);
+  const { language, mounted } = useLanguage();
 
   const getText = (text: string | { en: string; zh: string }) => {
     return typeof text === 'string' ? text : text[language] ?? text.en;
@@ -78,21 +61,6 @@ export default function ArchiveClient({ posts }: Props) {
         <ThemeToggle />
       </div>
 
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

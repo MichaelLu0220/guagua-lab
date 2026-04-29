@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 
+
 // ============================================
 // 類型定義
 // ============================================
@@ -42,8 +43,8 @@ export function getAllPosts(): PostMeta[] {
         title: data.title || filename.replace(/\.mdx$/, ''),
         date: typeof data.date === 'string' ? data.date : String(data.date),
         description: data.description || '',
-        categories: data.categories || '',
-        tags: data.tags || [],
+        categories: (data.categories || '').toLowerCase(),
+        tags: (data.tags || []).map((t: string) => t.toLowerCase()),
         slug: filename.replace(/\.mdx$/, ''),
       };
     })
@@ -79,8 +80,8 @@ export function getPostBySlug(slug: string): PostWithContent | null {
     title: data.title || slug,
     date: typeof data.date === 'string' ? data.date : String(data.date),
     description: data.description || '',
-    categories: data.categories || '',
-    tags: data.tags || [],
+    categories: (data.categories || '').toLowerCase(),
+    tags: (data.tags || []).map((t: string) => t.toLowerCase()),
     slug,
     content,
     readingTime,
@@ -139,4 +140,31 @@ export function getLocalizedText(
   if (!text) return '';
   if (typeof text === 'string') return text;
   return text[lang] || text.zh || text.en || '';
+}
+
+// ============================================
+// TOC 輔助函式
+// ============================================
+
+export interface Heading {
+  level: 2 | 3;
+  text: string;
+  id: string;
+}
+
+export function extractHeadings(content: string): Heading[] {
+  const regex = /^(#{2,3})\s+(.+)$/gm;
+  const headings: Heading[] = [];
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    const level = match[1].length as 2 | 3;
+    const text = match[2].trim().replace(/\*\*/g, '').replace(/`/g, '');
+    const id = text
+      .toLowerCase()
+      .replace(/[\s]+/g, '-')
+      .replace(/[^\w一-鿿-]/g, '')
+      .replace(/^-|-$/g, '');
+    headings.push({ level, text, id });
+  }
+  return headings;
 }
