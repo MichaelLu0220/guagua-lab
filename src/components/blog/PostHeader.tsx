@@ -45,7 +45,7 @@ export default function PostHeader({
                     const titleText = getLocalizedText(title);
 
                     // 定義可能的分隔符號（依優先順序）
-                    const separators = ['：', ':', '，', ' - ', '—'];
+                    const separators = ['：', ':', '，', ' - ', '—','\n',','];
                     let separator = '';
 
                     // 找到第一個存在的分隔符號
