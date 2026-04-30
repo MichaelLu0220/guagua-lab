@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import {
   FaHome, FaIdCard, FaArchive, FaTags, FaBars, FaTimes,
-  FaChartLine, FaWrench, FaChevronDown,
+  FaChartLine, FaWrench, FaChevronDown, FaSuitcase,
 } from 'react-icons/fa';
+import { getAllChecklists } from '@/lib/checklists';
+import { pickString } from '@/lib/checklists/types';
 
 interface Props {
   styleVariant?: 'home' | 'default';
@@ -30,6 +32,9 @@ export default function HomeNavBar({ styleVariant = 'default', isVisible = true 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
+  const [checklistsOpen, setChecklistsOpen] = useState(false);
+  const [mobileChecklistsOpen, setMobileChecklistsOpen] = useState(false);
+  const checklists = getAllChecklists();
 
   const navbarClass =
     styleVariant === 'home'
@@ -77,6 +82,58 @@ export default function HomeNavBar({ styleVariant = 'default', isVisible = true 
               </li>
             ))}
 
+            {/* Checklists dropdown */}
+            <li
+              className="relative"
+              onMouseEnter={() => setChecklistsOpen(true)}
+              onMouseLeave={() => setChecklistsOpen(false)}
+            >
+              <Link
+                href="/checklist"
+                className={`group flex items-center gap-2 transition-colors duration-300 ${textColorClass} hover:text-blue-500`}
+              >
+                <FaSuitcase className="transition-transform duration-200 group-hover:scale-110" size={15} />
+                <span className="text-sm font-medium">{L('Checklists', '清單')}</span>
+                <FaChevronDown
+                  size={10}
+                  className={`transition-transform duration-200 ${checklistsOpen ? 'rotate-180' : ''}`}
+                />
+              </Link>
+
+              <div className={`absolute top-full left-1/2 -translate-x-1/2 pt-3 w-56 z-50 transition-all duration-200 ${
+                checklistsOpen
+                  ? 'opacity-100 pointer-events-auto translate-y-0'
+                  : 'opacity-0 pointer-events-none -translate-y-1'
+              }`}>
+                <div className="bg-white dark:bg-gray-900 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 p-1.5">
+                  <Link
+                    href="/checklist"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-300 transition-colors text-sm font-medium group/item"
+                  >
+                    <span className="inline-flex items-center justify-center w-5 shrink-0">
+                      <FaSuitcase size={14} className="transition-transform duration-200 group-hover/item:scale-110" />
+                    </span>
+                    <span className="whitespace-nowrap">{L('All checklists', '所有清單')}</span>
+                  </Link>
+                  <div className="my-1 h-px bg-gray-200 dark:bg-gray-700" />
+                  {checklists.map(c => (
+                    <Link
+                      key={c.slug}
+                      href={`/checklist/${c.slug}`}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-300 transition-colors text-sm font-medium"
+                    >
+                      <span className="inline-flex items-center justify-center w-5 shrink-0 text-base leading-none">
+                        {c.emoji}
+                      </span>
+                      <span className="whitespace-nowrap">
+                        {pickString(c.shortTitle ?? c.title, language)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </li>
+
             {/* Tools dropdown */}
             <li
               className="relative"
@@ -98,15 +155,15 @@ export default function HomeNavBar({ styleVariant = 'default', isVisible = true 
                   ? 'opacity-100 pointer-events-auto translate-y-0'
                   : 'opacity-0 pointer-events-none -translate-y-1'
               }`}>
-                <div className="bg-white/98 dark:bg-gray-900/98 backdrop-blur-md rounded-xl border border-gray-200/80 dark:border-gray-700/80 shadow-xl p-1.5">
+                <div className="bg-white dark:bg-gray-900 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 p-1.5">
                   {TOOLS.map(({ href, Icon, en, zh }) => (
                     <Link
                       key={href}
                       href={href}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-sm group/item"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-800 dark:text-gray-100 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors text-sm font-medium group/item"
                     >
                       <Icon size={14} className="transition-transform duration-200 group-hover/item:scale-110" />
-                      <span className="font-medium">{L(en, zh)}</span>
+                      <span>{L(en, zh)}</span>
                     </Link>
                   ))}
                 </div>
@@ -140,6 +197,53 @@ export default function HomeNavBar({ styleVariant = 'default', isVisible = true 
                   </Link>
                 </li>
               ))}
+
+              {/* Mobile Checklists section */}
+              <li>
+                <button
+                  onClick={() => setMobileChecklistsOpen(!mobileChecklistsOpen)}
+                  className="group flex items-center justify-between w-full py-2 text-gray-300 hover:text-white transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaSuitcase className="group-hover:scale-110 transition-transform duration-200" size={16} />
+                    <span className="font-medium">{L('Checklists', '清單')}</span>
+                  </div>
+                  <FaChevronDown
+                    size={12}
+                    className={`transition-transform duration-200 ${mobileChecklistsOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {mobileChecklistsOpen && (
+                  <ul className="pl-8 mt-2 space-y-2">
+                    <li>
+                      <Link
+                        href="/checklist"
+                        onClick={() => { setMobileMenuOpen(false); setMobileChecklistsOpen(false); }}
+                        className="flex items-center gap-3 py-1.5 text-blue-300 hover:text-blue-100 transition-colors text-sm"
+                      >
+                        <span className="inline-flex items-center justify-center w-5 shrink-0">
+                          <FaSuitcase size={14} />
+                        </span>
+                        <span>{L('All checklists', '所有清單')}</span>
+                      </Link>
+                    </li>
+                    {checklists.map(c => (
+                      <li key={c.slug}>
+                        <Link
+                          href={`/checklist/${c.slug}`}
+                          onClick={() => { setMobileMenuOpen(false); setMobileChecklistsOpen(false); }}
+                          className="flex items-center gap-3 py-1.5 text-blue-300 hover:text-blue-100 transition-colors text-sm"
+                        >
+                          <span className="inline-flex items-center justify-center w-5 shrink-0 text-base leading-none">
+                            {c.emoji}
+                          </span>
+                          <span>{pickString(c.shortTitle ?? c.title, language)}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
 
               {/* Mobile Tools section */}
               <li>

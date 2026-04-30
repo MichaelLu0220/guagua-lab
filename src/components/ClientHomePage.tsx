@@ -8,6 +8,8 @@ import HeroBanner from '@/components/HeroBanner';
 import ThemeToggle from '@/components/ThemeToggle';
 import HomeNavBar from '@/components/HomeNavBar';
 import { useLanguage } from '@/hooks/useLanguage';
+import { getAllChecklists } from '@/lib/checklists';
+import { pickString } from '@/lib/checklists/types';
 
 interface PostMeta {
     title: string | { en: string; zh: string }; // 更新這裡支援雙語
@@ -204,28 +206,67 @@ export default function ClientHomePage({ posts }: ClientHomePageProps) {
                                 </div>
                             </div>
 
-                            {/* Tools */}
+                            {/* Tools — includes stock backtest + travel checklists */}
                             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-200 dark:border-gray-700">
                                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
                                     {language === 'en' ? 'Tools' : '工具箱'}
                                 </h3>
-                                <Link
-                                    href="/equity"
-                                    className="flex items-start gap-3 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all duration-300 group"
-                                >
-                                    <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 transition-colors">
-                                        <FaChartLine size={14} className="text-white" />
+
+                                <div className="space-y-2">
+                                    <Link
+                                        href="/equity"
+                                        className="flex items-start gap-3 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all duration-300 group"
+                                    >
+                                        <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 transition-colors">
+                                            <FaChartLine size={14} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                                                {language === 'en' ? 'Stock Backtest' : '台股回測'}
+                                            </p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
+                                                {language === 'en' ? 'Dynamic rebalancing strategy' : '動態補倉 ＋ 停利策略'}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                </div>
+
+                                {/* Sub-section: Travel Checklists */}
+                                <div className="mt-5 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            {language === 'en' ? 'Travel Checklists' : '旅遊清單'}
+                                        </h4>
+                                        <Link
+                                            href="/checklist"
+                                            className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
+                                        >
+                                            {language === 'en' ? 'View all →' : '全部 →'}
+                                        </Link>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                                            {language === 'en' ? 'Stock Backtest' : '台股回測'}
-                                        </p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
-                                            {language === 'en' ? 'Dynamic rebalancing strategy' : '動態補倉 ＋ 停利策略'}
-                                        </p>
+                                    <div className="space-y-2">
+                                        {getAllChecklists().map(c => (
+                                            <Link
+                                                key={c.slug}
+                                                href={`/checklist/${c.slug}`}
+                                                className="flex items-start gap-3 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all duration-300 group"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0 group-hover:bg-emerald-600 transition-colors text-base leading-none">
+                                                    {c.emoji}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 truncate">
+                                                        {pickString(c.title, language)}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed line-clamp-2">
+                                                        {pickString(c.shortDescription, language)}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        ))}
                                     </div>
-                                </Link>
+                                </div>
                             </div>
 
                             {/* Statistics */}

@@ -3,7 +3,11 @@
 import { useEffect, useState } from 'react';
 import Giscus from '@giscus/react';
 
-export default function CommentSection() {
+type CommentSectionProps = {
+  postSlug: string;
+};
+
+export default function CommentSection({ postSlug }: CommentSectionProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [language, setLanguage] = useState<'en' | 'zh'>('en');
   const [hasInteracted, setHasInteracted] = useState(false);

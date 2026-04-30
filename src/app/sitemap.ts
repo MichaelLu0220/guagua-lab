@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getAllPosts, getAllCategories, getAllTags } from '@/lib/posts';
+import { getAllChecklists } from '@/lib/checklists';
 import { siteConfig } from '@/lib/siteConfig';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -7,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
   const categories = getAllCategories();
   const tags = getAllTags();
+  const checklists = getAllChecklists();
 
   // 靜態頁面
   const staticPages: MetadataRoute.Sitemap = [
@@ -40,7 +42,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.7,
     },
+    {
+      url: `${baseUrl}/checklist`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
   ];
+
+  // Checklist pages
+  const checklistPages: MetadataRoute.Sitemap = checklists.map(c => ({
+    url: `${baseUrl}/checklist/${c.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }));
 
   // 文章頁面
   const postPages: MetadataRoute.Sitemap = posts.map(post => ({
@@ -66,5 +82,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.5,
   }));
 
-  return [...staticPages, ...postPages, ...categoryPages, ...tagPages];
+  return [...staticPages, ...postPages, ...categoryPages, ...tagPages, ...checklistPages];
 }
