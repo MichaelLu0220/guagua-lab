@@ -52,15 +52,11 @@ export default function Home() {
             name: siteConfig.name,
             description: siteConfig.description.zh,
             url: siteConfig.url,
+            inLanguage: ['zh-TW', 'en'],
             author: {
               '@type': 'Person',
               name: siteConfig.author.name,
               url: siteConfig.author.github,
-            },
-            potentialAction: {
-              '@type': 'SearchAction',
-              target: `${siteConfig.url}/search?q={search_term_string}`,
-              'query-input': 'required name=search_term_string',
             },
           }),
         }}

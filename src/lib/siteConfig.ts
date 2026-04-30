@@ -22,7 +22,7 @@ export const siteConfig = {
   
   // 社群分享預設圖片（Open Graph）
   // 建議尺寸：1200 x 630 px
-  defaultOgImage: '/images/og-default.png', // ⚠️ 請確保此圖片存在
+  defaultOgImage: '/images/og-default7.png', // ⚠️ 請確保此圖片存在
   
   // 語言設定
   defaultLocale: 'en',

@@ -140,8 +140,11 @@ export default async function BlogPostPage({ params }: Props) {
             '@type': 'BlogPosting',
             headline: getLocalizedText(post.title, 'en'),
             description: getLocalizedText(post.description, 'en'),
+            image: [`${siteConfig.url}${siteConfig.defaultOgImage}`],
+            url: `${siteConfig.url}/blog/${slug}`,
             datePublished: post.date,
             dateModified: post.date,
+            inLanguage: ['zh-TW', 'en'],
             author: {
               '@type': 'Person',
               name: siteConfig.author.name,
@@ -150,11 +153,13 @@ export default async function BlogPostPage({ params }: Props) {
             publisher: {
               '@type': 'Person',
               name: siteConfig.author.name,
+              url: siteConfig.author.github,
             },
             mainEntityOfPage: {
               '@type': 'WebPage',
               '@id': `${siteConfig.url}/blog/${slug}`,
             },
+            articleSection: post.categories,
             keywords: post.tags?.join(', '),
           }),
         }}
