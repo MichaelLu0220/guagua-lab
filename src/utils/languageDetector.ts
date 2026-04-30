@@ -1,48 +1,50 @@
 // utils/languageDetector.ts
+//
+// Site default is English (drives <html lang>, SEO metadata, OG tags, JSON-LD).
+// On the client, however, we auto-flip to Chinese for visitors whose browser
+// language family is Chinese — so a Taiwanese / HK / mainland reader does not
+// have to manually toggle on every visit.
+//
+// Resolution order:
+//   1. localStorage 'language'  — returning visitor, honor their choice
+//   2. navigator.languages      — first-time visitor, sniff browser language
+//   3. fall through to 'en'
 
 export function detectBrowserLanguage(): 'en' | 'zh' {
-  // 檢查是否為客戶端環境
+  // SSR-safe: server has no navigator/localStorage
   if (typeof window === 'undefined') {
-    return 'en'; // 服務端預設返回英文
+    return 'en';
   }
 
-  // 首先檢查是否已有保存的語言設置
   const savedLanguage = localStorage.getItem('language') as 'en' | 'zh' | null;
   if (savedLanguage) {
     return savedLanguage;
   }
 
-  // 獲取瀏覽器語言列表
   const browserLanguages = navigator.languages || [navigator.language];
-  
-  // 檢查是否包含中文相關語言
   const hasChineseLang = browserLanguages.some(lang => {
-    const lowerLang = lang.toLowerCase();
-    return lowerLang.includes('zh') || 
+    const lowerLang = (lang || '').toLowerCase();
+    return lowerLang.includes('zh') ||
            lowerLang.includes('chinese') ||
            lowerLang.includes('cn') ||
            lowerLang.includes('tw') ||
            lowerLang.includes('hk');
   });
 
-  // 如果檢測到中文，返回中文，否則返回英文
   const detectedLanguage: 'en' | 'zh' = hasChineseLang ? 'zh' : 'en';
-  
-  // 保存檢測結果到 localStorage
+
+  // Persist the detection so subsequent visits skip the sniff and avoid the
+  // brief EN → ZH flicker on Chinese-browser visitors.
   localStorage.setItem('language', detectedLanguage);
-  
   return detectedLanguage;
 }
 
-// 初始化語言設置的函數
 export function initializeLanguage(): 'en' | 'zh' {
   const language = detectBrowserLanguage();
-  
-  // 觸發語言變更事件，通知其他組件
+
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('languageChange', { detail: language }));
   }
-  
+
   return language;
 }
-

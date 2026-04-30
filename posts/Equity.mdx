@@ -1,0 +1,315 @@
+---
+title:
+  en: "Backtesting Isn’t Just About Returns — It’s About How Far Your Strategy Can Go"
+  zh: "回測不只是收益 \n 而是你的策略能走多遠"
+description:
+  en: "The journey of building Equity — a Taiwan stock dynamic-rebalance backtest tool — from a naive risk-reward question to a three-layer stop-loss design that exposes how Martingale-style strategies actually blow up."
+  zh: "從一個天真的風報比問題，到一個能照出補倉策略真實死法的三層停損架構——Equity 台股動態補倉回測工具的開發紀錄。"
+date: 2026-04-28 21:30:00
+tags: [Next.js, TypeScript, Finance, Backtest, Taiwan Stock]
+categories: Tech
+---
+
+<div className="language-content" data-lang="en">
+
+It started with a stupidly simple question:
+
+> "If I keep buying more when it drops, and take profit every time it bounces, does that actually work?"
+
+Spoiler: sometimes it does. And then one day it doesn't, and the entire account goes with it.
+
+This post is the story of **Equity** — a Taiwan stock backtest tool I built over a few weekends — and why halfway through the project the thing I was trying to measure changed completely.
+
+## The Trap: A Strategy That Feels Free Money
+
+The strategy is the kind of thing your uncle would tell you about at dinner:
+
+- Pick a stock. Decide a target position size `X` (say NT$100,000).
+- Every time the position drops below `X`, **buy more** to top it back up.
+- Every time the position rises above `X + Y`, **sell the excess** and pocket `Y`.
+- Repeat forever.
+
+On paper, this looks beautiful. The position oscillates around `X`, you collect `Y` every cycle, your average cost drifts lower and lower as you average down. **Free money from volatility.**
+
+The first version of the backtest engine confirmed it. Win rate above 90%. Profits accumulating like clockwork.
+
+Then I picked a stock that just kept falling.
+
+## The Problem: This Is Martingale Wearing a Suit
+
+The first time the engine printed a -73% drawdown on a position I "thought I was managing," it clicked. This isn't a clever rebalancing strategy — it's **Martingale with a Taiwanese accent**.
+
+> Drop more → buy more → next drop hurts more → buy even more → eventually one tail event eats every cycle of profit you ever booked.
+
+The naive risk-reward I had been computing — `Y : Z` where `Z` is "however much you decide is too much" — was a lie. It assumed the strategy *had* a max loss. It doesn't. Without a hard stop, the max loss is "all of it."
+
+So the project pivoted. The question stopped being *how much can I earn?* and became *how exactly do I die?*
+
+## Three Layers of Stop-Loss
+
+I ended up implementing three independent kill switches, any of which liquidates the position:
+
+### Z1 — The Strategy Death Line
+
+```ts
+if (positionValue <= X - Z1) exitAll('strategy_dead_line')
+```
+
+A floor anchored to the *initial* target position. Crude, but it answers the simplest question: **has this strategy stopped working?** If the position is supposed to oscillate around `X` and it's now sitting at `X − Z1`, the oscillation hypothesis is dead.
+
+### Z2 — The Real Money You Lost
+
+```ts
+if (totalInvested - realizedProfit - positionValue >= Z2) exitAll('max_loss_limit')
+```
+
+This is the one that actually maps to risk-reward. It tracks **real cash damage**, not paper position value. With Z2 you can finally write the honest sentence:
+
+> "I am willing to lose at most Z2 to chase Y per cycle."
+
+This is the layer that makes the tool a backtest instead of a hopium dispenser.
+
+### Z3 — High-Water Trailing Stop
+
+```ts
+if (highWaterMark - totalAssets >= Z3) exitAll('trailing_stop')
+```
+
+Total assets = realized profit + unrealized position value. Once the strategy has actually made money, this layer protects it from being given back. The high-water mark moves up after every successful take-profit, which means the floor moves with it.
+
+Stop-losses run **before** rebalancing on each daily tick. The reasoning is brutal:
+
+> If the strategy is already dead, don't feed it more money.
+
+## The Capital Cap Problem
+
+There's a second silent killer in any backtest: **infinite capital assumption**.
+
+In a simulation, "buy more when it drops" works fine because the simulator has infinite cash. In real life, you have a bank account. So every backtest needs:
+
+```ts
+if (totalInvested + needed > capitalCap) {
+  recordEvent('capital_cap_reached')
+  // skip the rebalance
+}
+```
+
+The moment you add a cap, the strategy's character changes completely. The pretty equity curves get uglier. The win rate drops. **And that's the point.** The backtest is now telling the truth about a constraint that exists in the real world.
+
+## The Stack
+
+Nothing exotic, picked for "ship it on a weekend":
+
+- **Next.js 16 (App Router)** — the API routes proxy Finmind so the token never touches the browser.
+- **TypeScript + Tailwind v4** — the entire engine in `lib/backtest.ts` is pure functions, no framework coupling.
+- **lightweight-charts v5** — K-line chart for picking the start date by clicking, plus an `AreaSeries` for the equity curve.
+- **Finmind API** — free tier, daily K-line data for Taiwan stocks. Surprisingly generous.
+
+The shape of the engine is small enough to fit in a paragraph:
+
+```ts
+for (const day of days) {
+  const positionValue = shares * day.close
+  highWater = Math.max(highWater, realized + positionValue)
+
+  // 1. stop-losses run first
+  if (z1Triggered(positionValue)) return exit('z1')
+  if (z2Triggered(invested, realized, positionValue)) return exit('z2')
+  if (z3Triggered(highWater, realized, positionValue)) return exit('z3')
+
+  // 2. take profit
+  if (positionValue >= X + Y) sellExcess()
+
+  // 3. rebalance buy
+  if (positionValue < X && invested + need <= cap) buy(need)
+
+  snapshot(day)
+}
+```
+
+The whole thing is deterministic. Same inputs, same outputs, every time. No `Math.random()`, no API calls inside the loop. That mattered more than I expected — it meant I could trust the comparison when I tweaked one parameter.
+
+## The Chart That Changed My Mind
+
+The single most useful UI element turned out to be the **equity curve with the cumulative-investment line overlaid**:
+
+- Purple gradient area = total assets (realized + unrealized)
+- Grey dashed line = cumulative cash invested
+
+When the grey line crosses *above* the purple area, the strategy has flipped from net-profit to net-loss — and it happens way earlier than the win rate suggests. A 92% win rate strategy can already be underwater on the eighth losing day.
+
+That single crossover visual is worth more than every percentage in the metrics panel.
+
+## What I Actually Learned
+
+**1. A backtest's job is not to show profits. It's to show how the strategy dies.**
+
+If your tool only knows how to draw the up-curve, you've built a hopium machine, not a backtester.
+
+**2. Win rate is a liar.**
+
+A strategy with 95% win rate and one catastrophic loss is just a slow-motion blow-up. The Z2 column matters more than the win-rate column.
+
+**3. Capital cap is non-negotiable.**
+
+Any rebalance/Martingale-flavoured strategy without a cap is implicitly assuming you are infinitely rich. You are not. Your simulator should not pretend you are.
+
+**4. Stop-losses must run before buys.**
+
+The order of operations inside the daily loop is a moral statement. Putting stop-loss after buy means: "I will keep funding a corpse." Don't.
+
+The thing I built started as a profit calculator and ended as a **how-you-die visualiser**. That second tool is much more useful than the first — and it's the one I'd actually trust before putting real money on the table.
+
+</div>
+
+<div className="language-content" data-lang="zh">
+
+故事是從一個蠢到不能再蠢的問題開始的：
+
+> 「跌了就補，漲了就停利，這樣一直做下去，是不是就賺爆了？」
+
+劇透：有時候真的會賺。然後某一天就不會了，順便把整個帳戶帶走。
+
+這篇是 **Equity** 的開發紀錄——一個我用幾個週末刻出來的台股回測工具——以及做到一半的時候，我想衡量的東西怎麼整個變調。
+
+## 陷阱：一個看起來像免費午餐的策略
+
+這個策略很像那種你叔叔在飯桌上會跟你講的東西：
+
+- 挑一檔股票，定一個目標部位大小 `X`（例如十萬塊）。
+- 每次部位市值跌破 `X`，**就補買**回到 `X`。
+- 每次部位市值漲過 `X + Y`，**賣掉超出的部分**，把 `Y` 收進口袋。
+- 然後就一直重複。
+
+紙上看起來很漂亮。部位在 `X` 附近震盪，每一輪都收割 `Y`，平均成本還會越補越低。**從波動裡撿錢。**
+
+回測引擎的第一版也驗證了這件事。勝率 90% 以上，獲利像時鐘一樣準時累加。
+
+然後我選了一檔一路向下的股票。
+
+## 真相：這只是穿西裝的 Martingale
+
+當引擎第一次在「我以為我控制得住的部位」上印出 -73% 的回撤，整件事就清醒了。這根本不是什麼聰明的再平衡策略，這是 **披著台股皮的 Martingale**。
+
+> 跌越多 → 補越多 → 下一次跌得更痛 → 補得更兇 → 終究有一根尾巴會把你之前每一輪賺到的全部吃掉。
+
+我前面在計算的那個天真風報比——`Y : Z`，其中 `Z` 是「我覺得太多就停」——根本是個謊言。它預設了這個策略**有一個最大虧損**，但其實沒有。沒有硬停損的話，最大虧損就是「全部」。
+
+於是專案的方向就拐彎了。問題從「我會賺多少？」變成「我究竟會怎麼死？」
+
+## 三層停損
+
+最後我做了三條互相獨立的停損線，任一條被觸發就直接全數出場：
+
+### Z1——策略死亡線
+
+```ts
+if (positionValue <= X - Z1) exitAll('strategy_dead_line')
+```
+
+一個錨在「初始目標部位」上的地板。粗暴，但它回答了最簡單的問題：**這個策略還活著嗎？** 如果部位本來該在 `X` 附近震盪，現在已經卡在 `X − Z1`，那「會震盪」這個假設就死了。
+
+### Z2——你真的虧掉的錢
+
+```ts
+if (totalInvested - realizedProfit - positionValue >= Z2) exitAll('max_loss_limit')
+```
+
+這條才是真正對應到風報比的那一條。它追蹤的是**真正的現金損失**，不是部位市值。有了 Z2，你才終於可以寫出一句誠實的話：
+
+> 「為了追每一輪的 Y，我最多願意虧 Z2。」
+
+這層存在之後，這個工具才從「希望製造機」變成回測。
+
+### Z3——高水位移動停損
+
+```ts
+if (highWaterMark - totalAssets >= Z3) exitAll('trailing_stop')
+```
+
+總資產 = 已實現獲利 + 未實現部位。一旦策略真的賺到錢了，這層就用來保護它別吐回去。每次成功停利之後，高水位會被往上推，地板也跟著往上移。
+
+每天的順序是：**停損永遠先跑、補倉永遠最後跑。** 邏輯很冷血：
+
+> 如果策略已經死了，就不要再餵它錢。
+
+## 資金上限的隱形殺手
+
+任何回測還有第二個沉默殺手：**「無限資金」假設**。
+
+在模擬器裡，「跌了就補」永遠跑得動，因為模擬器口袋有無限多錢。但你沒有。所以每個回測都需要：
+
+```ts
+if (totalInvested + needed > capitalCap) {
+  recordEvent('capital_cap_reached')
+  // 跳過這次補倉
+}
+```
+
+加上 Cap 的瞬間，整個策略的個性會變掉。漂亮的資產曲線會醜很多，勝率會往下掉。**這就是重點。** 回測這時候才開始講真話，講一個現實世界裡明明就在那邊的限制。
+
+## 技術棧
+
+沒什麼特別的，全部都是「週末能上線」優先：
+
+- **Next.js 16（App Router）**——API route 代理 Finmind，token 不會掉到瀏覽器端。
+- **TypeScript + Tailwind v4**——`lib/backtest.ts` 整個引擎都是純函式，跟框架完全解耦。
+- **lightweight-charts v5**——K 線圖讓你直接點圖選回測起始日，加上 `AreaSeries` 畫資產曲線。
+- **Finmind API**——免費版，台股日 K 資料，免費版的額度比想像中大方。
+
+引擎本體小到一段就講得完：
+
+```ts
+for (const day of days) {
+  const positionValue = shares * day.close
+  highWater = Math.max(highWater, realized + positionValue)
+
+  // 1. 停損永遠優先
+  if (z1Triggered(positionValue)) return exit('z1')
+  if (z2Triggered(invested, realized, positionValue)) return exit('z2')
+  if (z3Triggered(highWater, realized, positionValue)) return exit('z3')
+
+  // 2. 停利
+  if (positionValue >= X + Y) sellExcess()
+
+  // 3. 補倉
+  if (positionValue < X && invested + need <= cap) buy(need)
+
+  snapshot(day)
+}
+```
+
+整個引擎是決定性的——同樣的輸入，永遠得到一樣的輸出。迴圈裡沒有 `Math.random()`，沒有任何 API 呼叫。這件事比我原本以為的重要，因為它代表我調一個參數之後，可以**信任**前後兩次比較的結果。
+
+## 那張改變我想法的圖
+
+最後事實證明，整個 UI 裡最有用的元素是**資產曲線疊上累積投入線**：
+
+- 紫色漸層區域 = 總資產（已實現 + 未實現）
+- 灰色虛線 = 累計投入的現金
+
+當灰線**爬到紫色區域上面**的那一刻，策略就從「淨賺」翻成「淨虧」了——而且這件事發生的時間，比勝率告訴你的早得多。一個 92% 勝率的策略，可能在第八次小虧的時候就已經是淨虧損狀態。
+
+那一個交叉點的視覺，比指標面板裡所有百分比加起來都更有價值。
+
+## 我從這個專案真正學到的事
+
+**1. 回測工具的工作不是秀獲利，而是秀死法。**
+
+如果你的工具只會畫漂亮的上漲曲線，你做的就不是回測，是希望製造機。
+
+**2. 勝率會騙人。**
+
+一個 95% 勝率、配上一次毀滅性虧損的策略，只是慢動作的爆倉。Z2 那一欄比勝率那一欄重要太多。
+
+**3. 資金上限不能省。**
+
+任何 Martingale 或補倉味道的策略，少了 Cap 都等於默認你「有無限多的錢」。你沒有。模擬器也不該假裝你有。
+
+**4. 停損必須跑在補倉之前。**
+
+每日迴圈裡的執行順序其實是一句道德宣言。把停損放在補倉後面，等於在說：「我會繼續餵屍體錢。」不要這樣做。
+
+我做的這個東西，本來是一個獲利計算機，最後變成了一個**死法視覺化工具**。後者比前者有用太多——而且我會真的相信它，再把錢丟進市場裡。
+
+</div>

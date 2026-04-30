@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github-dark.css';
 import {
   getPostBySlug,
   getAllPostSlugs,
@@ -42,10 +44,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  // 取得本地化標題和描述
-  const title = getLocalizedText(post.title, 'zh');
-  const description = getLocalizedText(post.description, 'zh') || 
-    `閱讀 ${title} - ${siteConfig.name}`;
+  // 取得本地化標題和描述（站台預設為英文）
+  const title = getLocalizedText(post.title, 'en');
+  const description = getLocalizedText(post.description, 'en') ||
+    `Read ${title} - ${siteConfig.name}`;
 
   // 文章 URL
   const url = `${siteConfig.url}/blog/${slug}`;
@@ -66,7 +68,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       modifiedTime: post.date,
       authors: [siteConfig.author.name],
       tags: post.tags,
-      locale: 'zh_TW',
+      locale: 'en_US',
       images: [
         {
           url: `${siteConfig.url}${siteConfig.defaultOgImage}`,
@@ -119,6 +121,11 @@ export default async function BlogPostPage({ params }: Props) {
         h2: ({ children }) => <h2 id={slugify(String(children))}>{children}</h2>,
         h3: ({ children }) => <h3 id={slugify(String(children))}>{children}</h3>,
       }}
+      options={{
+        mdxOptions: {
+          rehypePlugins: [rehypeHighlight],
+        },
+      }}
     />
   );
 
@@ -131,8 +138,8 @@ export default async function BlogPostPage({ params }: Props) {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'BlogPosting',
-            headline: getLocalizedText(post.title, 'zh'),
-            description: getLocalizedText(post.description, 'zh'),
+            headline: getLocalizedText(post.title, 'en'),
+            description: getLocalizedText(post.description, 'en'),
             datePublished: post.date,
             dateModified: post.date,
             author: {

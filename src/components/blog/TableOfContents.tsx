@@ -11,7 +11,7 @@ export default function TableOfContents({ headings, language }: TableOfContentsP
     }
 
     return (
-        <aside className="hidden xl:block w-56 shrink-0">
+        <aside className="hidden lg:block w-56 shrink-0">
             <div className="sticky top-28 space-y-1">
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-3">
                     {language === 'en' ? 'Contents' : '目錄'}

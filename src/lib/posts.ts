@@ -135,11 +135,11 @@ export function getAllTags(): string[] {
  */
 export function getLocalizedText(
   text: string | { en: string; zh: string } | undefined,
-  lang: 'en' | 'zh' = 'zh'
+  lang: 'en' | 'zh' = 'en'
 ): string {
   if (!text) return '';
   if (typeof text === 'string') return text;
-  return text[lang] || text.zh || text.en || '';
+  return text[lang] || text.en || text.zh || '';
 }
 
 // ============================================

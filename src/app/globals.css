@@ -82,22 +82,22 @@ body {
   transition: opacity 0.3s ease-in-out;
 }
 
-/* Default: hide English, show Chinese */
+/* Default: show English, hide Chinese */
 .language-content[data-lang="en"] {
-  display: none;
+  display: block;
 }
 
 .language-content[data-lang="zh"] {
-  display: block;
-}
-
-/* When HTML has lang="en", flip visibility */
-html[lang="en"] .language-content[data-lang="en"] {
-  display: block;
-}
-
-html[lang="en"] .language-content[data-lang="zh"] {
   display: none;
+}
+
+/* When HTML has lang="zh-TW", flip visibility */
+html[lang="zh-TW"] .language-content[data-lang="en"] {
+  display: none;
+}
+
+html[lang="zh-TW"] .language-content[data-lang="zh"] {
+  display: block;
 }
 
 /* ============================================
@@ -114,17 +114,32 @@ html[lang="en"] .language-content[data-lang="zh"] {
   line-height: 1.7;
 }
 
-/* Syntax highlighting colors */
-.prose pre code .comment { color: #6b7280; }
-.prose pre code .keyword { color: #f472b6; }
-.prose pre code .string { color: #4ade80; }
-.prose pre code .function { color: #60a5fa; }
-.prose pre code .number { color: #fbbf24; }
+/* Syntax highlighting (rehype-highlight + github-dark theme).
+   Override the theme's default background/padding so colors blend onto
+   the CodeBlock's own dark pre background instead of fighting with it. */
+.prose pre code.hljs {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
 
 /* Blockquotes with brutal style */
 .prose blockquote {
   border-radius: 0 !important;
   font-style: normal !important;
+  margin: 1.75em 0;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #ec4899; /* pink-500 */
+  background: #fffbeb; /* amber-50 */
+  color: #3f3f46; /* zinc-700 */
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+.dark .prose blockquote {
+  background: rgba(244, 114, 182, 0.08);
+  border-left-color: #f472b6; /* pink-400 */
+  color: #d4d4d8; /* zinc-300 */
 }
 
 .prose blockquote p {
@@ -189,6 +204,207 @@ html[lang="en"] .language-content[data-lang="zh"] {
 
 .dark .prose ol > li::before {
   background: #db2777; /* pink-600 */
+}
+
+/* ============================================
+   Article Typography (Phase 2 polish)
+   ============================================ */
+
+/* Body copy */
+.prose {
+  font-size: 1.0625rem; /* 17px */
+  line-height: 1.8;
+  color: #27272a; /* zinc-800 */
+  letter-spacing: 0.005em;
+}
+
+.dark .prose {
+  color: #e4e4e7; /* zinc-200 */
+}
+
+.prose p {
+  margin: 0 0 1.5em 0;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+/* Headings — clear hierarchy, no plugin */
+.prose h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 2em 0 1em;
+  color: #18181b;
+}
+
+.prose h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 2.5em 0 1em;
+  padding-bottom: 0.5rem;
+  border-bottom: 3px solid #ec4899; /* pink-500 */
+  color: #18181b;
+  scroll-margin-top: 6rem;
+}
+
+.prose h3 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 2em 0 0.75em;
+  color: #18181b;
+  scroll-margin-top: 6rem;
+}
+
+.prose h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5;
+  margin: 1.75em 0 0.5em;
+  color: #18181b;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4 {
+  color: #fafafa;
+}
+
+.dark .prose h2 {
+  border-bottom-color: #f472b6; /* pink-400 */
+}
+
+/* Links */
+.prose a {
+  color: #db2777; /* pink-600 */
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.prose a:hover {
+  color: #ec4899; /* pink-500 */
+}
+
+.dark .prose a {
+  color: #f472b6; /* pink-400 */
+}
+
+.dark .prose a:hover {
+  color: #f9a8d4; /* pink-300 */
+}
+
+/* Strong */
+.prose strong {
+  font-weight: 700;
+  color: #18181b;
+}
+
+.dark .prose strong {
+  color: #fafafa;
+}
+
+/* Inline code (excludes code inside <pre>) */
+.prose :not(pre) > code {
+  background: #fce7f3; /* pink-100 */
+  color: #be185d; /* pink-700 */
+  padding: 0.15em 0.4em;
+  font-size: 0.9em;
+  font-weight: 600;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.dark .prose :not(pre) > code {
+  background: rgba(244, 114, 182, 0.15);
+  color: #f9a8d4; /* pink-300 */
+}
+
+/* Horizontal rule */
+.prose hr {
+  border: 0;
+  height: 3px;
+  background: #18181b;
+  margin: 2.5em 0;
+}
+
+.dark .prose hr {
+  background: #71717a; /* zinc-500 */
+}
+
+/* List item rhythm */
+.prose ul > li,
+.prose ol > li {
+  margin: 0.5em 0;
+  line-height: 1.7;
+}
+
+/* Tables (in case any post uses them) */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.95em;
+}
+
+.prose th,
+.prose td {
+  border: 2px solid #18181b;
+  padding: 0.6em 0.9em;
+  text-align: left;
+}
+
+.prose th {
+  background: #fef3c7; /* amber-100 */
+  font-weight: 700;
+}
+
+.dark .prose th,
+.dark .prose td {
+  border-color: #52525b; /* zinc-600 */
+}
+
+.dark .prose th {
+  background: #3f3f46; /* zinc-700 */
+}
+
+/* Mobile readability */
+@media (max-width: 640px) {
+  .prose {
+    font-size: 1rem; /* 16px */
+    line-height: 1.75;
+  }
+  .prose p {
+    margin-bottom: 1.25em;
+  }
+  .prose h1 {
+    font-size: 1.875rem;
+  }
+  .prose h2 {
+    font-size: 1.5rem;
+    margin-top: 2em;
+  }
+  .prose h3 {
+    font-size: 1.25rem;
+    margin-top: 1.75em;
+  }
+  .prose h4 {
+    font-size: 1.0625rem;
+  }
+  .prose blockquote {
+    padding: 0.75rem 1rem;
+    margin: 1.5em 0;
+  }
 }
 
 /* ============================================

@@ -12,7 +12,7 @@ git branch -M main
 
 # 如果還沒有遠端倉庫，創建一個新的 GitHub 倉庫
 # 然後添加遠端倉庫（替換為您的實際 URL）
-git remote add origin https://github.com/MichaelLu0220/newblogpage
+git remote add origin https://github.com/MichaelLu0220/guagua-lab
 
 # 推送到 GitHub
 git push -u origin main

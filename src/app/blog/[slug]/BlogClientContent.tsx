@@ -10,6 +10,7 @@ import PostNavigation from '@/components/blog/PostNavigation';
 import TableOfContents from '@/components/blog/TableOfContents';
 import SiteFooter from '@/components/blog/SiteFooter';
 import type { BilingualHeadings } from '@/lib/posts';
+import { detectBrowserLanguage } from '@/utils/languageDetector';
 
 interface PostData {
     title: string | { en: string; zh: string };
@@ -43,7 +44,7 @@ export default function BlogClientContent({
     nextPost,
     headings,
 }: BlogClientContentProps) {
-    const [language, setLanguage] = useState<'en' | 'zh'>('zh');
+    const [language, setLanguage] = useState<'en' | 'zh'>('en');
     const [mounted, setMounted] = useState(false);
 
     // 語言文字對照
@@ -86,10 +87,7 @@ export default function BlogClientContent({
     };
 
     useEffect(() => {
-        const savedLanguage = localStorage.getItem('language') as 'en' | 'zh' | null;
-        if (savedLanguage) {
-            setLanguage(savedLanguage);
-        }
+        setLanguage(detectBrowserLanguage());
         setMounted(true);
     }, []);
 
@@ -149,8 +147,8 @@ export default function BlogClientContent({
                         />
 
                         {/* ========== Article Content ========== */}
-                        <article className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 p-6 sm:p-8 rounded-lg shadow-sm dark:shadow-none">
-                            <div className="prose max-w-none transition-colors duration-300">
+                        <article className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 p-6 sm:p-8 lg:px-12 lg:py-10 rounded-lg shadow-sm dark:shadow-none">
+                            <div className="prose mx-auto max-w-[680px] transition-colors duration-300">
                                 {mdxContent}
                             </div>
                         </article>

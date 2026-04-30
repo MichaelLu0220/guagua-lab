@@ -25,8 +25,8 @@ export const siteConfig = {
   defaultOgImage: '/images/og-default.png', // ⚠️ 請確保此圖片存在
   
   // 語言設定
-  defaultLocale: 'zh-TW',
-  locales: ['zh-TW', 'en'],
+  defaultLocale: 'en',
+  locales: ['en', 'zh-TW'],
   
   // 關鍵字
   keywords: ['技術部落格', 'Web 開發', 'Next.js', 'React', '程式設計', 'GuaGua'],
@@ -41,7 +41,7 @@ export const defaultSEO = {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,
   },
-  description: siteConfig.description.zh,
+  description: siteConfig.description.en,
   keywords: siteConfig.keywords,
   authors: [{ name: siteConfig.author.name }],
   creator: siteConfig.author.name,
@@ -62,7 +62,7 @@ export const defaultSEO = {
   twitter: {
     card: 'summary_large_image',
     title: siteConfig.name,
-    description: siteConfig.description.zh,
+    description: siteConfig.description.en,
     images: [`${siteConfig.url}${siteConfig.defaultOgImage}`],
   },
   robots: {

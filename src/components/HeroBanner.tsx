@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { detectBrowserLanguage } from '@/utils/languageDetector';
 
 const images = [
     '/images/og-default4.png',
@@ -20,7 +21,7 @@ function scrollToArticles() {
 export default function HeroBanner() {
     const [image, setImage] = useState('');
     const [visible, setVisible] = useState(false);
-    const [language, setLanguage] = useState<'en' | 'zh'>('zh');
+    const [language, setLanguage] = useState<'en' | 'zh'>('en');
 
     useEffect(() => {
         const handleLanguageChange = (event: CustomEvent<'en' | 'zh'>) => {
@@ -28,8 +29,7 @@ export default function HeroBanner() {
         };
         window.addEventListener('languageChange', handleLanguageChange as EventListener);
 
-        const savedLanguage = localStorage.getItem('language') as 'en' | 'zh' | null;
-        if (savedLanguage) setLanguage(savedLanguage);
+        setLanguage(detectBrowserLanguage());
 
         const idx = Math.floor(Math.random() * images.length);
         setImage(images[idx]);

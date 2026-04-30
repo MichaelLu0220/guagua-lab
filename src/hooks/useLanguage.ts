@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { detectBrowserLanguage } from '@/utils/languageDetector';
 
 export function useLanguage() {
-  const [language, setLanguage] = useState<'en' | 'zh'>('zh');
+  const [language, setLanguage] = useState<'en' | 'zh'>('en');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
