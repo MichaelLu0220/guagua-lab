@@ -22,15 +22,18 @@
 
 # misc
 .DS_Store
+Thumbs.db
+desktop.ini
 *.tar.gz
 
-# debug
+# debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
-# env files (can opt-in for committing if needed)
+# env files
 .env*.local
 .env
 
@@ -41,29 +44,23 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# ============================================
-# 新增項目
-# ============================================
-
-# Backup files (備份檔案)
+# backup and temporary files
 *.bak
 *.backup
-**/backup/
-
-# IDE / Editor (編輯器設定)
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS generated (系統產生)
-Thumbs.db
-desktop.ini
-
-# Temp files (暫存檔)
 *.tmp
 *.temp
-*.log
+*.swp
+*.swo
+**/backup/
 
-# Deposts (草稿)
+# IDE / editor
+.idea/
+.vscode/
+
+# local/private project notes and drafts
 /deposts/
+/drafts/
+/private/
+/notes/
+deployflow*.txt
+STRUCTURE.local.md
