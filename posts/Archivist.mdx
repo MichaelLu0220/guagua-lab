@@ -1,0 +1,277 @@
+---
+title:
+  en: "Archivist: A Small Tool I Built to Guard AGENTS.md"
+  zh: "Archivist：我做了一個替 AGENTS.md 把關的小工具"
+description:
+  en: "A Codex skill that turns chat decisions into reviewable proposals for AGENTS.md — so project memory stays compact, intentional, and inheritable across AI sessions."
+  zh: "一個專門維護 AGENTS.md 的 Codex skill：把對話裡的長期決策整理成可審核的提案，讓專案記憶在 AI session 之間既精簡又可被繼承。"
+date: 2026-05-21 12:00:00
+tags: [AI, Codex, Skill, Agent]
+categories: Tech
+---
+
+<div className="language-content drop-cap" data-lang="en">
+
+Every time I start a new AI coding session, **the agent shows up like it has amnesia**. It does not know why this repo is CLI-only and intentionally has no UI, which runtime files must never be committed, or that the team already decided certain workflows are off-limits. So it starts guessing again — and it may guess differently every time. Or worse, it reads every file in the repo over and over until your usage quota is almost burned through.
+
+This is a small but persistent problem I keep running into while exploring AI coding, and it is the reason I started building Archivist. In AI-assisted development, a lot of the truly important decisions do not live in the code — they live in the conversation. Architectural direction, tooling constraints, testing flows, project rules: if those decisions are never written down, the next time around the AI can only re-derive them from the current file tree. Slowly I came to feel that many AI coding workflow problems are not really about the context window being too small — they are about **the lack of a project memory layer the next session can inherit**.
+
+The most obvious answer is to write all of that into `AGENTS.md`. But that creates its own problem: if you stuff everything in there, it quickly turns into another `wiki-final-v2-really-final.md` — looks like it contains everything, but **ends up broad and shallow, hurting accuracy and quietly burning tokens**. Archivist is a small experiment around exactly this problem: a Codex skill dedicated to maintaining `AGENTS.md`.
+
+## What Happens When a Repo Has No Memory?
+
+Suppose that in one session you decide to migrate your CSS to a layout system. The AI at the time knows about it and makes the change. But three days later you open a new session, and the new AI has none of that conversational context — it might fall back to the old approach, or invent a fresh set of rules from the current files. It is not that the AI is dumb; **it just never inherited the decisions from last time**.
+
+That is exactly what `AGENTS.md` is for: making long-term rules inheritable by the next AI session. So **it must not become a trash bin** — it should only hold project knowledge that is durable and that future AIs genuinely need to know.
+
+## The Experiment: Archivist
+
+Archivist is currently a Codex skill focused on maintaining `AGENTS.md`. It reads the currently visible conversation context, picks out things worth preserving as long-term project knowledge, and **turns them into a clear set of change proposals** — new rules, modifications to existing rules, deletions of stale content, or flags for conflicts that need a human to decide.
+
+In other words, Archivist is not a knowledge base. It is closer to **project-level memory governance**: which things deserve to be inherited by future AIs, and which are just one-off context that can stay in the conversation and be forgotten. This distinction matters, because `AGENTS.md` is not an ordinary notebook — it shapes how future AIs read this repo, how they make decisions, and what they refuse to do. So I deliberately did not let Archivist summarise chat content and write it in directly; it produces a proposal first, and **the user confirms it in chat**.
+
+## What It Keeps, and What It Filters Out
+
+Archivist only considers durable project knowledge, such as:
+
+- architectural decisions, coding style
+- repeatable workflow preferences
+- tooling or environment conventions, project rules and constraints
+
+It filters out one-off Q&A and transient debugging traces, jokes, small talk or emotional venting, unsettled brainstorming, and generic knowledge that has nothing to do with this specific project.
+
+The core test is a single sentence:
+
+> Does a future AI working on this repo actually need to know this?
+
+When the answer is unclear, Archivist **leans toward not recording it**.
+
+## The Other Thing I Cared About: Token Cost
+
+If every run asks the AI to chew through the entire `README.md`, dev log, or full `AGENTS.md`, you can burn a lot of tokens fast. And `AGENTS.md` in particular gets reloaded in every later session — its bloat is **not a one-time cost, it is a tax you pay over and over**. So I made a few deliberate trade-offs.
+
+First, runtime state lives in `.archivist/state.json`, recording the last sync time and the `AGENTS.md` hash, so the tool knows where it left off and there is room for more precise incremental handling later. Second, the content of `AGENTS.md` **must stay extremely compressed** — one rule per line, only what a future AI needs to know, no raw chat text copied in. Third, the skill itself should be cheap: `SKILL.md` stays minimal and only holds the entry flow, detailed rules live in `skills/archivist/references/workflow.md`, and helpers live in scripts, so triggering the skill does not force the model to load every detail up front.
+
+None of this is technically fancy, but **small design choices like these are what decide whether a tool actually fits into daily use**.
+
+## How You Use It
+
+Inside the Codex App, you can summon the skill with `/Archivist` or `$archivist`. If the slash picker misbehaves, you can also just type:
+
+```text
+Archivist sync
+```
+
+Archivist reads the repo's `AGENTS.md` and `.archivist/state.json`, then produces proposals from the currently visible conversation context. Proposals are posted back into the chat, and also written to `.archivist/proposed.patch.md` as a working copy.
+
+A proposal looks roughly like this:
+
+```text
+1. [ADD] Tooling → CLI uses single-file Python standard library only
+2. [MOD] Workflow #2: old flow → new flow
+3. [DEL] Project Rules #4: stale rule ← no longer applies
+4. [!!] Tooling #1 conflict: existing "A" vs new "B"
+
+Accept which items? (examples: 1,3 / all / none / item number + edited text)
+```
+
+You can accept all, some, or simply reply `none`; if you want to tweak a specific item, you edit it in chat before confirming. **Archivist only applies the items that were explicitly accepted.** This flow deliberately keeps the confirmation surface in the chat rather than a side file — `.archivist/proposed.patch.md` is only an audit copy, the real confirmation always happens in the conversation.
+
+## Why Not Just Auto-Write?
+
+Because **project memory carries weight**. The moment a rule lands in `AGENTS.md`, it stops being one line from one conversation and becomes part of how future AIs behave — it can shape architectural choices, mark files off-limits, dictate a testing approach, or outright refuse certain actions. If those rules are wrong, stale, or just things the AI inferred on its own, the damage gets amplified.
+
+So Archivist does not treat "fully automated" as the top goal; **it is closer to a review process** where the AI organises, compresses, and flags conflicts, but whether anything actually gets written is still a human call. That is also why the `[!!]` conflict marker exists — when Archivist sees new information that disagrees with an existing rule, it does not silently pick a side, it surfaces the conflict and lets the user decide.
+
+## Install and Use
+
+The main shipping form of Archivist today is a Codex skill. The easiest install is a single Windows PowerShell command:
+
+```powershell
+$dir = Join-Path $env:TEMP "Archivist"; if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }; git clone https://github.com/MichaelLu0220/Archivist.git $dir; python "$dir\scripts\install.py"
+```
+
+This clones the repo into a temp folder and runs the installer, which copies the Archivist skill into the Codex App's global skills directory. After installing, restart the Codex App or open a new chat, and you can use Archivist in any project.
+
+If you prefer the manual route, you can clone it yourself:
+
+```bash
+git clone https://github.com/MichaelLu0220/Archivist.git
+cd Archivist
+python scripts/install.py
+```
+
+After install, the skill lives at:
+
+```text
+~/.codex/skills/archivist/
+```
+
+Inside the Codex App, pick it from the slash picker as `/Archivist`, or just type `Archivist sync` — the latter is the most reliable plain-text fallback, because `@Archivist` in the Codex App can be interpreted as a file or folder mention.
+
+Each repo's runtime state lives in `.archivist/`, which usually contains:
+
+```text
+.archivist/prompt.md
+.archivist/inbox.md
+.archivist/proposed.patch.md
+.archivist/state.json
+```
+
+This is local execution state, and should be git-ignored. The thing worth keeping long-term is **the compact set of confirmed rules in `AGENTS.md`**, not the scratch contents of `.archivist/`.
+
+## When I Think It Fits
+
+Archivist makes the most sense for projects that have already started using AI coding agents long-term. If you only ask AI to fix a small bug now and then, you probably do not need it; but once AI is participating in architectural discussions, tooling choices, testing flows, or repo rule maintenance, project memory starts to matter a lot — especially in situations like:
+
+- the same repo is picked up across many AI sessions
+- the project has rules that must not be broken
+- `AGENTS.md` is starting to get long and needs cleanup
+- the team wants AI to inherit decisions, but not to invent rules
+
+For me, the point of Archivist is not "automatically update `AGENTS.md`" as such. It is to **add a safety boundary** when AI starts participating in maintaining a project's memory.
+
+## Where to Find It
+
+If you want to try Archivist, read the source, or file an issue, the project lives at **[github.com/MichaelLu0220/Archivist](https://github.com/MichaelLu0220/Archivist)**. Stars and PRs are welcome, but what I'd actually love most is to hear which use cases break it — that is usually where the next iteration starts. The rest of what I'm building lives at **[github.com/MichaelLu0220](https://github.com/MichaelLu0220)**, if you want to wander.
+
+## Wrapping Up
+
+Archivist is a small tool that came out of poking at AI coding workflows. It pulls out what might be worth keeping from a conversation, turns it into a reviewable proposal, and only writes into `AGENTS.md` once a human says yes. This experiment reinforced something for me: **AI is not just for writing code — it can also help design the workflow around the work itself**. A lot of interesting tools do not have to start big; they can start from one very concrete, very everyday pain point.
+
+I am also increasingly convinced that the relationship between AI and people is not just "AI makes humans faster" — it is more like a complementarity, where AI can accelerate, organise, and execute, while humans bring inspiration, intuition, and the occasional out-of-left-field idea that nudges AI into producing something it would not have grown on its own. A lot of the time, what pushes AI to its peak is not the model itself, but the way a person thinks alongside it. I wrote up Archivist mostly because I wanted to share that idea: once you start developing alongside AI long-term, the question is not only what AI should do, but **which knowledge deserves to be kept — and which deserves to be forgotten**.
+
+</div>
+
+<div className="language-content drop-cap" data-lang="zh">
+
+每次開新的 AI coding session，**agent 都像失憶一樣**。它不知道這個 repo 為什麼只做 CLI、不做 UI；不知道哪些 runtime 檔案不能 commit；也不知道團隊早就決定某些 workflow 不准改。於是它開始重新猜，而且每次都可能猜得不一樣——又或是把所有檔案讀過一遍又一遍，直到你的使用限制又逼近臨界點。
+
+這是我最近在研究 AI coding 時一直遇到的小問題，也是我開始做 Archivist 的原因。在 AI-assisted development 裡，很多真正重要的決策不是發生在程式碼裡，而是發生在對話裡——架構方向、工具限制、測試流程、專案規則。如果這些決策沒被保存下來，下一次 AI 進來時就只能靠目前檔案重新推論。慢慢地我覺得，很多 AI coding workflow 的問題其實不是 context window 不夠大，而是**缺少一層能被下一個 session 繼承的 project memory**。
+
+最直覺的解法，是把這些內容寫進 `AGENTS.md`。但這又帶來另一個問題：如果什麼都往裡面塞，它很快就會變成另一種 `wiki-final-v2-really-final.md`——看起來什麼都有，實際上**樣樣通樣樣鬆，不只準確率下降，還會燃燒你的 Token**。Archivist 就是我針對這個問題做的小實驗：一個專門協助維護 `AGENTS.md` 的 Codex skill。
+
+## 如果 repo 沒有記憶，會發生什麼？
+
+假設某次 session 裡，你決定把 CSS 改成 layout system 的形式，當下 AI 知道了，也照做了。但三天後你開了新的 session，新的 AI 沒有前面的對話脈絡，可能沿用舊做法，或根據目前檔案重新猜一套規則——不是它不聰明，而是**它沒有繼承前一次討論的決策**。
+
+`AGENTS.md` 的用途，正是讓這些長期規則可以被下一個 AI session 繼承。所以**它不能變成垃圾桶**，應該只留下長期有效、未來 AI 真的需要知道的專案知識。
+
+## 我做了一個小實驗：Archivist
+
+Archivist 目前是一個專門維護 `AGENTS.md` 的 Codex skill。它會閱讀目前可見的對話上下文，找出值得長期保存的專案知識，**整理成一份清楚的變更提案**——可能是新增規則、修改既有規則、刪除過時內容，或標記出需要人類裁決的衝突。
+
+換句話說，Archivist 不是 knowledge base，比較像**專案層級的記憶治理（memory governance）**：哪些東西值得讓未來的 AI 繼承，哪些只是一次性上下文，留在對話裡就好。這個差異很重要，因為 `AGENTS.md` 不是普通筆記，它會影響之後 AI 如何理解這個 repo、如何做決策、哪些事情不能做。所以我沒有讓 Archivist 直接把聊天內容摘要後寫進去，而是先產生 proposal，**讓使用者在 chat 裡確認**。
+
+## 它會保存什麼？又會過濾什麼？
+
+Archivist 只會考慮長期有效的專案知識，例如：
+
+- 架構決策、 coding style
+- 可重複套用的 workflow 偏好
+- tooling 或環境約定、 專案規則與限制
+
+它會過濾掉那些只在當下有意義的東西——一次性的問答與暫時性的 debug 過程、玩笑、閒聊或情緒性對話、還沒拍板的 brainstorming，以及跟這個專案無關的通用知識。
+
+核心判斷只有一句話：
+
+> 未來的 AI 在處理這個 repo 時，真的需要知道這件事嗎？
+
+答案不明確時，**Archivist 會傾向不記**。
+
+## 我在意的另一件事：token 成本
+
+如果每次都請 AI 直接整理 `README.md`、開發日誌或整份 `AGENTS.md`，很容易燒掉大量 token。尤其 `AGENTS.md` 會在後續 session 中反覆被載入，**它的膨脹不是一次性的成本，而是每次都要付**。所以我在設計 Archivist 時，刻意做了幾個取捨。
+
+第一，runtime state 放在 `.archivist/state.json`，記錄上次同步時間與 `AGENTS.md` hash，讓工具知道上次整理到哪裡，也保留之後精準處理增量的可能。第二，`AGENTS.md` 的內容**必須極度壓縮**——一條一行，只寫未來 AI 需要知道的規則，不搬運原始聊天文字。第三，skill 本身也要省 token：`SKILL.md` 保持精簡，只保留入口流程；細節規則放到 `skills/archivist/references/workflow.md`，helper 放到 script，這樣每次觸發 skill 時不必一開始就載入所有細節。
+
+這些不算什麼很複雜的技術，但我覺得**這類小設計會影響工具能不能真的被日常使用**。
+
+## 使用流程
+
+在 Codex App 裡，可以用 `/Archivist` 或 `$archivist` 叫出 skill。如果 slash picker 的行為不如預期，也可以直接輸入：
+
+```text
+Archivist sync
+```
+
+Archivist 會讀取目前 repo 的 `AGENTS.md` 和 `.archivist/state.json`，再根據目前可見的對話上下文產生提案。提案會貼回 chat 中，並同步寫到 `.archivist/proposed.patch.md` 作為暫存紀錄。
+
+提案格式大概像這樣：
+
+```text
+1. [ADD] Tooling → CLI 採單檔 Python 標準函式庫
+2. [MOD] Workflow #2: 舊流程 → 新流程
+3. [DEL] Project Rules #4: 過時規則 ← 已不再適用
+4. [!!] Tooling #1 conflict: existing "A" vs new "B"
+
+Accept which items? (examples: 1,3 / all / none / item number + edited text)
+```
+
+你可以接受全部、部分，或直接回覆 `none`；如果某一項需要調整，也可以在 chat 裡修改後再確認。**Archivist 只會套用被明確接受的項目。**這個流程刻意把確認介面固定在 chat，而不是讓使用者去編輯暫存檔——`.archivist/proposed.patch.md` 只是 audit copy，**真正的確認永遠發生在對話中**。
+
+## 為什麼不直接自動寫入？
+
+因為**專案記憶有權重**。當一條規則進入 `AGENTS.md`，它就不再只是某次對話中的一句話，而會變成未來 AI 行為的一部分——AI 可能會根據它選擇架構、避免修改某些檔案、採用某種測試方式，甚至拒絕做某些事。如果這些規則是錯的、過期的，或只是 AI 自己推測出來的，影響會被放大。
+
+所以 Archivist 不把「自動化」當成最高目標，**它比較像一個審稿流程**：AI 幫你整理、壓縮、標記衝突，但最後是否寫入仍然需要人類確認。這也是 `[!!]` 衝突標記存在的原因——當 Archivist 發現新資訊和既有規則衝突時，它不會自動選邊，而是把問題提出來，交給使用者裁決。
+
+## 安裝與使用
+
+目前 Archivist 的主要交付形式是 Codex skill。最簡單的安裝方式，是在 Windows PowerShell 執行一行指令：
+
+```powershell
+$dir = Join-Path $env:TEMP "Archivist"; if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }; git clone https://github.com/MichaelLu0220/Archivist.git $dir; python "$dir\scripts\install.py"
+```
+
+這行指令會把 repo clone 到暫存資料夾，然後執行 installer，把 Archivist skill 安裝到 Codex App 的全局 skills 目錄——安裝後重開 Codex App 或開新 chat，就可以在任何專案中使用 Archivist。
+
+如果你偏好傳統方式，也可以手動 clone：
+
+```bash
+git clone https://github.com/MichaelLu0220/Archivist.git
+cd Archivist
+python scripts/install.py
+```
+
+安裝後，skill 會放在：
+
+```text
+~/.codex/skills/archivist/
+```
+
+之後在 Codex App 裡，可以用 slash picker 選 `/Archivist`，也可以直接輸入 `Archivist sync`——後者是最穩的純文字 fallback，因為 `@Archivist` 在 Codex App 裡可能會被解析成檔案或資料夾 mention。
+
+每個 repo 自己的 runtime 狀態會放在 `.archivist/`，通常包含：
+
+```text
+.archivist/prompt.md
+.archivist/inbox.md
+.archivist/proposed.patch.md
+.archivist/state.json
+```
+
+這些是本地執行狀態，應該被 git ignored。真正要長期留下的是**被確認後寫入 `AGENTS.md` 的精簡規則**，而不是 `.archivist/` 裡的暫存內容。
+
+## 我覺得它適合什麼情境？
+
+我覺得 Archivist 比較適合那些已經開始長期使用 AI coding agent 的專案。如果你只是偶爾請 AI 幫忙修一個小 bug，可能不太需要它；但如果你已經開始讓 AI 參與架構討論、工具選型、測試流程、repo 規則維護，那麼專案記憶就會變得很重要——尤其是這些情境：
+
+- 同一個 repo 會被多次 AI session 接手
+- 專案有些規則不能被破壞
+- `AGENTS.md` 已經開始變長，需要整理
+- 團隊希望 AI 繼承決策，但不希望它亂寫規則
+
+對我來說，Archivist 的重點不是「自動更新 AGENTS.md」這件事本身，而是讓 AI 參與專案記憶維護時，**多一層安全邊界**。
+
+## 在哪裡找到它
+
+如果你想試用 Archivist、看看原始碼，或想回報 issue，專案在 **[github.com/MichaelLu0220/Archivist](https://github.com/MichaelLu0220/Archivist)**。star 或 PR 都歡迎，但我更想聽到的，是哪些使用情境會把它玩壞——那通常就是下一次迭代的起點。我其他正在做的東西放在 **[github.com/MichaelLu0220](https://github.com/MichaelLu0220)**，有興趣可以逛逛。
+
+## 總結
+
+Archivist 是我在研究 AI coding workflow 時做出來的一個小工具。它會從對話中整理出可能值得長期保存的專案知識，產生可確認的提案，並在使用者同意後才寫入 `AGENTS.md`。這次嘗試讓我更確定一件事：**AI 不只可以幫我們寫程式，也可以一起參與工作流程本身的設計**——很多有趣的工具，可能不是一開始就要做得很大，而是從一個很具體、很日常的痛點開始。
+
+我也越來越覺得，AI 和人的關係不只是「AI 幫人提升效率」而已，更像是一種互補：AI 可以幫我們加速、整理、執行，而人可以用靈感、直覺，甚至一點天馬行空的想法，去引導 AI 做出原本不會自然長出來的東西。很多時候，讓 AI 發揮到巔峰的不是模型本身，而是人怎麼和它一起思考。我把 Archivist 整理出來，主要也是想分享這個想法：當我們開始長期和 AI 一起開發時，除了讓 AI 做事，也需要思考**哪些知識應該被留下來，哪些東西應該被忘掉**。
+
+</div>

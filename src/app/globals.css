@@ -132,7 +132,7 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
   border-left: 4px solid #ec4899; /* pink-500 */
   background: #fffbeb; /* amber-50 */
   color: #3f3f46; /* zinc-700 */
-  font-size: 1.0625rem;
+  font-size: 1rem;
   line-height: 1.75;
 }
 
@@ -155,6 +155,7 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
 .prose ul {
   list-style: none;
   padding-left: 0;
+  margin: 0.75em 0 1.75em 0;
 }
 
 .prose ul > li {
@@ -174,6 +175,7 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
   list-style: none;
   padding-left: 0;
   counter-reset: item;
+  margin: 0.75em 0 1.75em 0;
 }
 
 .prose ol > li {
@@ -212,7 +214,7 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
 
 /* Body copy */
 .prose {
-  font-size: 1.0625rem; /* 17px */
+  font-size: 1rem; /* 16px */
   line-height: 1.8;
   color: #27272a; /* zinc-800 */
   letter-spacing: 0.005em;
@@ -236,7 +238,7 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
 
 /* Headings — clear hierarchy, no plugin */
 .prose h1 {
-  font-size: 2.25rem;
+  font-size: 2rem;
   font-weight: 800;
   line-height: 1.2;
   margin: 2em 0 1em;
@@ -244,7 +246,7 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
 }
 
 .prose h2 {
-  font-size: 1.75rem;
+  font-size: 1.625rem;
   font-weight: 800;
   line-height: 1.3;
   margin: 2.5em 0 1em;
@@ -255,7 +257,7 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
 }
 
 .prose h3 {
-  font-size: 1.375rem;
+  font-size: 1.25rem;
   font-weight: 700;
   line-height: 1.4;
   margin: 2em 0 0.75em;
@@ -264,7 +266,7 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
 }
 
 .prose h4 {
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   font-weight: 700;
   line-height: 1.5;
   margin: 1.75em 0 0.5em;
@@ -304,30 +306,35 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
   color: #f9a8d4; /* pink-300 */
 }
 
-/* Strong */
+/* Strong — highlighted to draw the eye to key points */
 .prose strong {
   font-weight: 700;
   color: #18181b;
+  background: #fce7f3; /* pink-100 */
+  padding: 0.05em 0.3em;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .dark .prose strong {
   color: #fafafa;
+  background: rgba(244, 114, 182, 0.18);
 }
 
-/* Inline code (excludes code inside <pre>) */
+/* Inline code (excludes code inside <pre>) — quiet monospace, no highlight */
 .prose :not(pre) > code {
-  background: #fce7f3; /* pink-100 */
-  color: #be185d; /* pink-700 */
-  padding: 0.15em 0.4em;
-  font-size: 0.9em;
-  font-weight: 600;
-  border-radius: 3px;
+  background: transparent;
+  color: #52525b; /* zinc-600 */
+  padding: 0;
+  font-size: 0.92em;
+  font-weight: 500;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .dark .prose :not(pre) > code {
-  background: rgba(244, 114, 182, 0.15);
-  color: #f9a8d4; /* pink-300 */
+  background: transparent;
+  color: #a1a1aa; /* zinc-400 */
 }
 
 /* Horizontal rule */
@@ -345,7 +352,7 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
 /* List item rhythm */
 .prose ul > li,
 .prose ol > li {
-  margin: 0.5em 0;
+  margin: 0.2em 0;
   line-height: 1.7;
 }
 
@@ -378,6 +385,34 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
   background: #3f3f46; /* zinc-700 */
 }
 
+/* Drop cap — magazine-style oversized first letter, opt-in per post via .drop-cap */
+.prose .language-content.drop-cap > p:first-of-type::first-letter {
+  float: left;
+  font-size: 3.4em;
+  line-height: 0.9;
+  margin: 0.02em 0.1em 0 0;
+  font-weight: 800;
+  color: #ec4899; /* pink-500 */
+}
+
+.dark .prose .language-content.drop-cap > p:first-of-type::first-letter {
+  color: #f472b6; /* pink-400 */
+}
+
+/* Raised cap — fallback for short opening paragraphs (set by JS in BlogClientContent) */
+.prose .language-content.short-cap > p:first-of-type::first-letter {
+  font-size: 1.9em;
+  font-weight: 800;
+  line-height: 1;
+  color: #ec4899; /* pink-500 */
+  padding-right: 0.04em;
+  vertical-align: -0.08em;
+}
+
+.dark .prose .language-content.short-cap > p:first-of-type::first-letter {
+  color: #f472b6; /* pink-400 */
+}
+
 /* Mobile readability */
 @media (max-width: 640px) {
   .prose {
@@ -404,6 +439,12 @@ html[lang="zh-TW"] .language-content[data-lang="zh"] {
   .prose blockquote {
     padding: 0.75rem 1rem;
     margin: 1.5em 0;
+  }
+  .prose .language-content.drop-cap > p:first-of-type::first-letter {
+    font-size: 2.8em;
+  }
+  .prose .language-content.short-cap > p:first-of-type::first-letter {
+    font-size: 1.7em;
   }
 }
 

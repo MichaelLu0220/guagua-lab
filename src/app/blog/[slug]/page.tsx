@@ -120,6 +120,18 @@ export default async function BlogPostPage({ params }: Props) {
         pre: CodeBlock as React.ComponentType<React.ComponentProps<'pre'>>,
         h2: ({ children }) => <h2 id={slugify(String(children))}>{children}</h2>,
         h3: ({ children }) => <h3 id={slugify(String(children))}>{children}</h3>,
+        a: ({ href, children, ...props }) => {
+          const isExternal = typeof href === 'string' && /^https?:\/\//.test(href);
+          return isExternal ? (
+            <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+              {children}
+            </a>
+          ) : (
+            <a href={href} {...props}>
+              {children}
+            </a>
+          );
+        },
       }}
       options={{
         mdxOptions: {

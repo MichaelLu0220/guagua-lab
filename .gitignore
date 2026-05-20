@@ -64,3 +64,6 @@ desktop.ini
 *.tmp
 *.temp
 *.log
+
+# Deposts (草稿)
+/deposts/

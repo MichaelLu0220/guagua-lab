@@ -86,6 +86,33 @@ export default function BlogClientContent({
         });
     };
 
+    // 量測首段視覺行數：太短就改用 raised cap，避免 drop cap 浮動破版
+    const adjustCapStyle = () => {
+        const visibles = document.querySelectorAll<HTMLElement>(
+            '.language-content[data-lang]'
+        );
+        visibles.forEach((el) => {
+            if (el.style.display === 'none') return;
+            // 還原 class，避免在不同語言/重新量測時殘留錯誤狀態
+            if (el.dataset.capOriginal === 'drop') {
+                el.classList.remove('short-cap');
+                el.classList.add('drop-cap');
+            } else if (!el.dataset.capOriginal) {
+                el.dataset.capOriginal = el.classList.contains('drop-cap') ? 'drop' : 'none';
+            }
+            if (!el.classList.contains('drop-cap')) return;
+            const firstP = el.querySelector(':scope > p');
+            if (!firstP) return;
+            const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+            const pHeight = (firstP as HTMLElement).getBoundingClientRect().height;
+            // 少於 1.7 行視為「太短」——改用 raised cap
+            if (lineHeight > 0 && pHeight < lineHeight * 1.7) {
+                el.classList.remove('drop-cap');
+                el.classList.add('short-cap');
+            }
+        });
+    };
+
     useEffect(() => {
         setLanguage(detectBrowserLanguage());
         setMounted(true);
@@ -94,6 +121,8 @@ export default function BlogClientContent({
     useEffect(() => {
         if (mounted) {
             toggleLanguageContent(language);
+            // 等下一幀讓 display 切換生效後再量測首段高度
+            requestAnimationFrame(() => adjustCapStyle());
         }
     }, [mounted, language]);
 
