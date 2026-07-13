@@ -1,0 +1,197 @@
+import type { Metadata } from 'next';
+import React from 'react';
+import { notFound } from 'next/navigation';
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github-dark.css';
+import {
+  getPostBySlug,
+  getAllPostSlugs,
+  getLocalizedText,
+  getAdjacentPosts,
+  extractHeadings,
+  slugify,
+} from '@/lib/posts';
+import { siteConfig } from '@/lib/siteConfig';
+import BlogClientContent from './BlogClientContent';
+import { CodeBlock } from '@/components/CodeBlock';
+
+// ============================================
+// 靜態路徑生成（SSG 優化）
+// ============================================
+
+export async function generateStaticParams() {
+  const slugs = getAllPostSlugs();
+  return slugs.map(slug => ({ slug }));
+}
+
+// ============================================
+// 動態 SEO Metadata
+// ============================================
+
+interface Props {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
+
+  if (!post) {
+    return {
+      title: '文章不存在',
+      description: '找不到您要的文章',
+    };
+  }
+
+  // 取得本地化標題和描述（站台預設為英文）
+  const title = getLocalizedText(post.title, 'en');
+  const description = getLocalizedText(post.description, 'en') ||
+    `Read ${title} - ${siteConfig.name}`;
+  const socialImage = post.image || siteConfig.defaultOgImage;
+
+  // 文章 URL
+  const url = `${siteConfig.url}/blog/${slug}`;
+
+  return {
+    title, // layout template applies: "%s | {siteConfig.name}"
+    description,
+    keywords: post.tags,
+    
+    // Open Graph（Facebook、LINE 等）
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: siteConfig.name,
+      type: 'article',
+      publishedTime: post.date,
+      modifiedTime: post.date,
+      authors: [siteConfig.author.name],
+      tags: post.tags,
+      locale: 'en_US',
+      images: [
+        {
+          url: `${siteConfig.url}${socialImage}`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    
+    // Twitter Card
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [`${siteConfig.url}${socialImage}`],
+    },
+    
+    // Canonical URL（避免重複內容問題）
+    alternates: {
+      canonical: url,
+    },
+  };
+}
+
+// ============================================
+// 頁面元件
+// ============================================
+
+export default async function BlogPostPage({ params }: Props) {
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
+
+  if (!post) {
+    return notFound();
+  }
+
+  // 取得上下篇文章
+  const { prev, next } = getAdjacentPosts(slug);
+
+  // 提取文章 headings（用於 TOC，按語言分組）
+  const headings = extractHeadings(post.content);
+
+  // Server-side 渲染 MDX
+  const mdxContent = (
+    <MDXRemote
+      source={post.content}
+      components={{
+        pre: CodeBlock as React.ComponentType<React.ComponentProps<'pre'>>,
+        h2: ({ children }) => <h2 id={slugify(String(children))}>{children}</h2>,
+        h3: ({ children }) => <h3 id={slugify(String(children))}>{children}</h3>,
+        a: ({ href, children, ...props }) => {
+          const isExternal = typeof href === 'string' && /^https?:\/\//.test(href);
+          return isExternal ? (
+            <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+              {children}
+            </a>
+          ) : (
+            <a href={href} {...props}>
+              {children}
+            </a>
+          );
+        },
+      }}
+      options={{
+        mdxOptions: {
+          rehypePlugins: [rehypeHighlight],
+        },
+      }}
+    />
+  );
+
+  return (
+    <>
+      {/* JSON-LD 結構化資料（幫助 Google 理解文章內容） */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BlogPosting',
+            headline: getLocalizedText(post.title, 'en'),
+            description: getLocalizedText(post.description, 'en'),
+            image: [`${siteConfig.url}${post.image || siteConfig.defaultOgImage}`],
+            url: `${siteConfig.url}/blog/${slug}`,
+            datePublished: post.date,
+            dateModified: post.date,
+            inLanguage: ['zh-TW', 'en'],
+            author: {
+              '@type': 'Person',
+              name: siteConfig.author.name,
+              url: siteConfig.author.github,
+            },
+            publisher: {
+              '@type': 'Person',
+              name: siteConfig.author.name,
+              url: siteConfig.author.github,
+            },
+            mainEntityOfPage: {
+              '@type': 'WebPage',
+              '@id': `${siteConfig.url}/blog/${slug}`,
+            },
+            articleSection: post.categories,
+            keywords: post.tags?.join(', '),
+          }),
+        }}
+      />
+      
+      <BlogClientContent
+        postData={{
+          title: post.title,
+          description: post.description,
+          date: post.date,
+          category: post.categories,
+          tags: post.tags,
+          readingTime: post.readingTime,
+        }}
+        mdxContent={mdxContent}
+        prevPost={prev ? { slug: prev.slug, title: prev.title } : null}
+        nextPost={next ? { slug: next.slug, title: next.title } : null}
+        headings={headings}
+      />
+    </>
+  );
+}

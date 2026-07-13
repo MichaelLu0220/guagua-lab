@@ -1,0 +1,71 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# remotion (video project — work in progress, not ready to commit)
+/remotion/
+
+# misc
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tar.gz
+
+# debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# backup and temporary files
+*.bak
+*.backup
+*.tmp
+*.temp
+*.swp
+*.swo
+**/backup/
+
+# IDE / editor
+.idea/
+.vscode/
+.claude/
+
+# local/private project notes and drafts
+/deposts/
+/drafts/
+/private/
+/notes/
+/design-output/
+deployflow*.txt
+STRUCTURE.local.md

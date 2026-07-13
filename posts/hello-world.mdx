@@ -1,0 +1,97 @@
+---
+title:
+  en: "Hello World: Writing Your First Post"
+  zh: "Hello World：寫下你的第一篇文章"
+description:
+  en: "A quick tour of everything this template's posts can do — bilingual content, code blocks, headings with a table of contents, and more."
+  zh: "快速導覽這個模板的文章功能 — 雙語內容、程式碼區塊、自動目錄等等。"
+date: 2026-01-01 12:00:00
+tags: [Guide, MDX]
+categories: Guide
+---
+
+<div className="language-content drop-cap" data-lang="en">
+
+Welcome to your new blog! This sample post shows everything a post in this template can do. Posts live in the `posts/` folder as `.mdx` files — the filename becomes the URL slug, so this file (`hello-world.mdx`) is served at `/blog/hello-world`.
+
+## Bilingual content
+
+Each post can carry both English and Chinese content. Wrap each language in a `language-content` block and the site shows the one matching the reader's language, switchable from the gear menu at the bottom right. If you only write in one language, just use a single block — or skip the wrapper entirely.
+
+## Headings build the table of contents
+
+Every `##` and `###` heading automatically appears in the table of contents on the right side (desktop only). No configuration needed.
+
+## Code blocks
+
+Code gets syntax highlighting out of the box:
+
+```ts
+export function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+```
+
+## Everything else Markdown does
+
+- **Bold**, *italic*, and `inline code`
+- [Links](https://nextjs.org) open external URLs in a new tab automatically
+- Lists, like this one
+
+> Blockquotes work too — great for callouts and citations.
+
+## Frontmatter reference
+
+The block at the top of this file controls the post's metadata:
+
+- `title` / `description` — a string, or `{ en, zh }` for bilingual
+- `date` — publish date, used for sorting
+- `tags` — shown on the post and the tags pages
+- `categories` — one category per post
+
+Happy writing! ✦
+
+</div>
+
+<div className="language-content drop-cap" data-lang="zh">
+
+歡迎來到你的新部落格！這篇範例文章展示了這個模板的文章能做的所有事情。文章以 `.mdx` 檔案的形式放在 `posts/` 資料夾裡 — 檔名就是網址，所以這個檔案（`hello-world.mdx`）的網址是 `/blog/hello-world`。
+
+## 雙語內容
+
+每篇文章可以同時包含中英文內容。把每種語言包在一個 `language-content` 區塊裡，網站會自動顯示符合讀者語言的版本，也可以從右下角的齒輪選單手動切換。如果你只想用一種語言寫作，用單一區塊就好 — 甚至可以完全不加這層包裝。
+
+## 標題自動生成目錄
+
+每個 `##` 和 `###` 標題會自動出現在右側的文章目錄（桌面版才顯示），不需要任何設定。
+
+## 程式碼區塊
+
+程式碼自動語法上色：
+
+```ts
+export function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+```
+
+## Markdown 的其他功能
+
+- **粗體**、*斜體*、`行內程式碼`
+- [連結](https://nextjs.org)：外部網址會自動在新分頁開啟
+- 清單，就像這個
+
+> 引用區塊也支援 — 適合用來做重點或引述。
+
+## Frontmatter 參考
+
+檔案最上方的區塊控制文章的 metadata：
+
+- `title` / `description` — 字串，或用 `{ en, zh }` 做雙語
+- `date` — 發布日期，用於排序
+- `tags` — 顯示在文章與標籤頁
+- `categories` — 每篇文章一個分類
+
+祝寫作愉快！✦
+
+</div>

@@ -1,0 +1,556 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
+:root {
+  --background: #fffbeb; /* amber-50 */
+  --foreground: #18181b; /* zinc-900 */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #202521;
+    --foreground: #f4f1e8;
+  }
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ============================================
+   Language Content Toggle
+   ============================================ */
+
+.language-content {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Default: show English, hide Chinese */
+.language-content[data-lang="en"] {
+  display: block;
+}
+
+.language-content[data-lang="zh"] {
+  display: none;
+}
+
+/* When HTML has lang="zh-TW", flip visibility */
+html[lang="zh-TW"] .language-content[data-lang="en"] {
+  display: none;
+}
+
+html[lang="zh-TW"] .language-content[data-lang="zh"] {
+  display: block;
+}
+
+/* ============================================
+   Prose Overrides for Neobrutalism
+   ============================================ */
+
+/* Make code blocks more brutal */
+.prose pre {
+  border-radius: 0 !important;
+}
+
+.prose pre code {
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+/* Syntax highlighting (rehype-highlight + github-dark theme).
+   Override the theme's default background/padding so colors blend onto
+   the CodeBlock's own dark pre background instead of fighting with it. */
+.prose pre code.hljs {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+/* Blockquotes with brutal style */
+.prose blockquote {
+  border-radius: 0 !important;
+  font-style: normal !important;
+  margin: 1.75em 0;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #ec4899; /* pink-500 */
+  background: #fffbeb; /* amber-50 */
+  color: #3f3f46; /* zinc-700 */
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.dark .prose blockquote {
+  background: rgba(20, 184, 166, 0.1);
+  border-left-color: #2dd4bf; /* teal-400 */
+  color: #e7e5df;
+}
+
+.prose blockquote p {
+  margin: 0;
+}
+
+/* Images with brutal borders */
+.prose img {
+  border-radius: 0 !important;
+}
+
+.prose figure {
+  margin: 2rem 0 2.25rem;
+}
+
+.prose figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+.prose figcaption {
+  margin-top: 0.75rem;
+  color: #71717a; /* zinc-500 */
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.dark .prose figcaption {
+  color: #a8a29e; /* stone-400 */
+}
+
+.prose .reference-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+}
+
+.prose .reference-pills a {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid #a1a1aa; /* zinc-400 */
+  border-radius: 999px;
+  background: transparent;
+  color: #52525b; /* zinc-600 */
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.prose .reference-pills a:hover,
+.prose .reference-pills a:focus-visible {
+  border-color: #52525b; /* zinc-600 */
+  background: #f4f4f5; /* zinc-100 */
+  color: #18181b; /* zinc-900 */
+  outline: none;
+}
+
+.dark .prose .reference-pills a {
+  border-color: #78716c; /* stone-500 */
+  color: #d6d3d1; /* stone-300 */
+}
+
+.dark .prose .reference-pills a:hover,
+.dark .prose .reference-pills a:focus-visible {
+  border-color: #2dd4bf; /* teal-400 */
+  background: rgba(20, 184, 166, 0.1);
+  color: #f4f1e8;
+}
+
+/* Lists with custom markers */
+.prose ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.75em 0 1.75em 0;
+}
+
+.prose ul > li {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.prose ul > li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: #ec4899; /* pink-500 */
+  font-weight: bold;
+}
+
+.prose ol {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: item;
+  margin: 0.75em 0 1.75em 0;
+}
+
+.prose ol > li {
+  position: relative;
+  padding-left: 2rem;
+  counter-increment: item;
+}
+
+.prose ol > li::before {
+  content: counter(item);
+  position: absolute;
+  left: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: #ec4899; /* pink-500 */
+  color: white;
+  font-weight: bold;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dark mode list markers */
+.dark .prose ul > li::before {
+  color: #2dd4bf; /* teal-400 */
+}
+
+.dark .prose ol > li::before {
+  background: #0f766e; /* teal-700 */
+}
+
+/* ============================================
+   Article Typography (Phase 2 polish)
+   ============================================ */
+
+/* Body copy */
+.prose {
+  font-size: 1rem; /* 16px */
+  line-height: 1.8;
+  color: #27272a; /* zinc-800 */
+  letter-spacing: 0.005em;
+}
+
+.dark .prose {
+  color: #e7e5df;
+}
+
+.prose p {
+  margin: 0 0 1.5em 0;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+/* Headings — clear hierarchy, no plugin */
+.prose h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 2em 0 1em;
+  color: #18181b;
+}
+
+.prose h2 {
+  font-size: 1.625rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 2.5em 0 1em;
+  padding-bottom: 0.5rem;
+  border-bottom: 3px solid #ec4899; /* pink-500 */
+  color: #18181b;
+  scroll-margin-top: 6rem;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 2em 0 0.75em;
+  color: #18181b;
+  scroll-margin-top: 6rem;
+}
+
+.prose h4 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.5;
+  margin: 1.75em 0 0.5em;
+  color: #18181b;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4 {
+  color: #f4f1e8;
+}
+
+.dark .prose h2 {
+  border-bottom-color: #2dd4bf; /* teal-400 */
+}
+
+/* Links */
+.prose a {
+  color: #db2777; /* pink-600 */
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.prose a:hover {
+  color: #ec4899; /* pink-500 */
+}
+
+.dark .prose a {
+  color: #5eead4; /* teal-300 */
+}
+
+.dark .prose a:hover {
+  color: #99f6e4; /* teal-200 */
+}
+
+/* Strong — highlighted to draw the eye to key points */
+.prose strong {
+  font-weight: 700;
+  color: #18181b;
+  background: #fce7f3; /* pink-100 */
+  padding: 0.05em 0.3em;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.dark .prose strong {
+  color: #fde68a; /* amber-200 */
+  background: rgba(251, 191, 36, 0.12);
+}
+
+/* Inline code (excludes code inside <pre>) — quiet monospace, no highlight */
+.prose :not(pre) > code {
+  background: transparent;
+  color: #52525b; /* zinc-600 */
+  padding: 0;
+  font-size: 0.92em;
+  font-weight: 500;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.dark .prose :not(pre) > code {
+  background: transparent;
+  color: #a1a1aa; /* zinc-400 */
+}
+
+/* Horizontal rule */
+.prose hr {
+  border: 0;
+  height: 3px;
+  background: #18181b;
+  margin: 2.5em 0;
+}
+
+.dark .prose hr {
+  background: #71717a; /* zinc-500 */
+}
+
+/* List item rhythm */
+.prose ul > li,
+.prose ol > li {
+  margin: 0.2em 0;
+  line-height: 1.7;
+}
+
+/* Tables (in case any post uses them) */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.95em;
+}
+
+.prose th,
+.prose td {
+  border: 2px solid #18181b;
+  padding: 0.6em 0.9em;
+  text-align: left;
+}
+
+.prose th {
+  background: #fef3c7; /* amber-100 */
+  font-weight: 700;
+}
+
+.dark .prose th,
+.dark .prose td {
+  border-color: #52525b; /* zinc-600 */
+}
+
+.dark .prose th {
+  background: #3f3f46; /* zinc-700 */
+}
+
+/* Drop cap — magazine-style oversized first letter, opt-in per post via .drop-cap */
+.prose .language-content.drop-cap > p:first-of-type::first-letter {
+  float: left;
+  font-size: 3.4em;
+  line-height: 0.9;
+  margin: 0.02em 0.1em 0 0;
+  font-weight: 800;
+  color: #ec4899; /* pink-500 */
+}
+
+.dark .prose .language-content.drop-cap > p:first-of-type::first-letter {
+  color: #2dd4bf; /* teal-400 */
+}
+
+/* Raised cap — fallback for short opening paragraphs (set by JS in BlogClientContent) */
+.prose .language-content.short-cap > p:first-of-type::first-letter {
+  font-size: 1.9em;
+  font-weight: 800;
+  line-height: 1;
+  color: #ec4899; /* pink-500 */
+  padding-right: 0.04em;
+  vertical-align: -0.08em;
+}
+
+.dark .prose .language-content.short-cap > p:first-of-type::first-letter {
+  color: #2dd4bf; /* teal-400 */
+}
+
+/* Mobile readability */
+@media (max-width: 640px) {
+  .prose {
+    font-size: 1rem; /* 16px */
+    line-height: 1.75;
+  }
+  .prose p {
+    margin-bottom: 1.25em;
+  }
+  .prose h1 {
+    font-size: 1.875rem;
+  }
+  .prose h2 {
+    font-size: 1.5rem;
+    margin-top: 2em;
+  }
+  .prose h3 {
+    font-size: 1.25rem;
+    margin-top: 1.75em;
+  }
+  .prose h4 {
+    font-size: 1.0625rem;
+  }
+  .prose blockquote {
+    padding: 0.75rem 1rem;
+    margin: 1.5em 0;
+  }
+  .prose .language-content.drop-cap > p:first-of-type::first-letter {
+    font-size: 2.8em;
+  }
+  .prose .language-content.short-cap > p:first-of-type::first-letter {
+    font-size: 1.7em;
+  }
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f4; /* stone-100 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #18181b; /* zinc-900 */
+  border: 2px solid #f5f5f4;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46; /* zinc-700 */
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #27272a; /* zinc-800 */
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #a1a1aa; /* zinc-400 */
+  border: 2px solid #27272a;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d8; /* zinc-300 */
+}
+
+/* ============================================
+   Selection Styling
+   ============================================ */
+
+::selection {
+  background: #06b6d4; /* cyan-500 */
+  color: white;
+}
+
+.dark ::selection {
+  background: #0891b2; /* cyan-700 */
+  color: white;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out;
+}
+
+/* ============================================
+   Focus Styles (Accessibility)
+   ============================================ */
+
+:focus-visible {
+  outline: 3px solid #ec4899; /* pink-500 */
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  nav, footer, .fixed {
+    display: none !important;
+  }
+}
+
